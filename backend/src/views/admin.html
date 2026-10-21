@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fleet Operations Console | Jaipur ⇄ Dehradun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #090A0D;
+      --surface: #111217;
+      --surface-glass: rgba(17, 18, 23, 0.85);
+      --card: #181920;
+      --card-hover: #1F212B;
+      --border: #262833;
+      --border-subtle: #1C1E26;
+      --border-focus: #4F5468;
+      --text: #F3F4F6;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      --emerald: #10B981;
+      --emerald-bg: rgba(16, 185, 129, 0.12);
+      --emerald-border: rgba(16, 185, 129, 0.35);
+      --amber: #F59E0B;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --amber-border: rgba(245, 158, 11, 0.35);
+      --crimson: #EF4444;
+      --crimson-bg: rgba(239, 68, 68, 0.12);
+      --crimson-border: rgba(239, 68, 68, 0.35);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      line-height: 1.5;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Guaranteed SVG constraint so icons NEVER blow up */
+    svg {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      max-width: 20px;
+      max-height: 20px;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .brand-title {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .brand-divider {
+      color: var(--border-focus);
+      font-size: 0.875rem;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-nav {
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .btn-nav:hover {
+      background: var(--card);
+      color: #FFFFFF;
+      border-color: var(--border-focus);
+    }
+
+    .btn-logout {
+      color: var(--crimson);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-logout:hover {
+      background: var(--crimson-bg);
+      color: #FF6B6B;
+      border-color: var(--crimson);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    /* Login Card */
+    .login-container {
+      max-width: 440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .login-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .lock-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--emerald);
+      box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.08);
+      flex-shrink: 0;
+    }
+
+    .login-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .login-header p {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 0.15rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    input[type="password"],
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border-radius: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text);
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--text-secondary);
+      background: #1C1E26;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background: #F3F4F6;
+      color: #0A0A0D;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover {
+      background: #FFFFFF;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+    }
+
+    .error-msg {
+      font-size: 0.75rem;
+      color: var(--crimson);
+      background: var(--crimson-bg);
+      border: 1px solid var(--crimson-border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      font-family: var(--font-mono);
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    /* Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+    }
+
+    @media (min-width: 640px) {
+      .telemetry-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      transition: border-color 0.15s ease;
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 0.25rem;
+    }
+
+    .metric-value-emerald {
+      color: var(--emerald);
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .status-badge.running,
+    .status-badge[class*="emerald"] {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border-color: var(--emerald-border);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-badge.paused,
+    .status-badge[class*="amber"] {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border-color: var(--amber-border);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+    }
+
+    .status-badge.idle {
+      background: var(--card);
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    /* Control Buttons */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 640px) {
+      .action-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .btn-action {
+      padding: 0.85rem 1rem;
+      border-radius: 9px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-action-start,
+    .btn-action-resume {
+      background: var(--emerald-bg);
+      border: 1px solid var(--emerald-border);
+      color: var(--emerald);
+    }
+
+    .btn-action-start:hover:not(:disabled),
+    .btn-action-resume:hover:not(:disabled) {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--emerald);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-action-pause {
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      color: var(--amber);
+    }
+
+    .btn-action-pause:hover:not(:disabled) {
+      background: rgba(245, 158, 11, 0.22);
+      border-color: var(--amber);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-action-reset {
+      background: var(--crimson-bg);
+      border: 1px solid var(--crimson-border);
+      color: var(--crimson);
+    }
+
+    .btn-action-reset:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: var(--crimson);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.25);
+    }
+
+    /* Duration Presets */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    @media (min-width: 640px) {
+      .preset-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .btn-preset {
+      padding: 0.55rem;
+      border-radius: 7px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-preset:hover {
+      background: var(--card-hover);
+      color: #FFFFFF;
+      border-color: var(--border-focus);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .input-row input {
+      width: 120px;
+    }
+
+    .input-row-unit {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .btn-secondary {
+      padding: 0.55rem 1rem;
+      border-radius: 7px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-hover);
+      border-color: var(--border-focus);
+      color: #FFFFFF;
+    }
+
+    /* Feedback Alert */
+    .feedback-alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feedback-alert.success,
+    .feedback-alert[class*="emerald"] {
+      background: var(--emerald-bg);
+      border-color: var(--emerald-border);
+      color: var(--emerald);
+    }
+
+    .feedback-alert.error,
+    .feedback-alert[class*="crimson"] {
+      background: var(--crimson-bg);
+      border-color: var(--crimson-border);
+      color: var(--crimson);
+    }
+
+    .btn-close-alert {
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      padding: 0 0.25rem;
+    }
+
+    .btn-close-alert:hover {
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer {
+      width: 100%;
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-section">
+      <div class="live-dot"></div>
+      <div class="brand-title">FLEET DISPATCH CONSOLE</div>
+      <span class="brand-divider">/</span>
+      <div class="brand-sub">JAIPUR ⇄ DEHRADUN (RJ-14-PB-4289)</div>
+    </div>
+    <div class="nav-actions">
+      <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" class="btn-nav">
+        <span>VIEW PASSENGER TRACKER</span>
+        <span>↗</span>
+      </a>
+      <button id="logoutBtn" onclick="handleLogout()" class="btn-nav btn-logout hidden">
+        LOGOUT
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+
+    <!-- Login Card (Shown when unauthenticated) -->
+    <div id="loginCard" class="card login-container">
+      <div class="login-header">
+        <div class="lock-icon-box">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Operations Authorization</h2>
+          <p>Enter administrative password to control vehicle</p>
+        </div>
+      </div>
+
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="passwordInput">Secret Key</label>
+          <input id="passwordInput" type="password" required autocomplete="current-password" placeholder="••••••••••••" />
+        </div>
+        <div id="loginError" class="error-msg hidden"></div>
+        <button type="submit" class="btn-submit">
+          AUTHENTICATE CONSOLE
+        </button>
+      </form>
+    </div>
+
+    <!-- Authenticated Dashboard Controls (Shown after login) -->
+    <div id="dashboard" class="dashboard-container hidden">
+
+      <!-- Feedback Alert -->
+      <div id="feedbackAlert" class="feedback-alert hidden">
+        <span id="feedbackText"></span>
+        <button onclick="hideFeedback()" class="btn-close-alert">✕</button>
+      </div>
+
+      <!-- Live Bus Telematics Banner -->
+      <div class="card">
+        <div class="section-header-row">
+          <div class="section-eyebrow">LIVE TELEMETRICS STREAM</div>
+          <div id="statusBadge" class="status-badge idle">
+            INITIALIZING
+          </div>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="metric-card">
+            <div class="metric-label">SPEED</div>
+            <div id="metricSpeed" class="metric-value metric-value-emerald">-- KM/H</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">ELAPSED TIME</div>
+            <div id="metricElapsed" class="metric-value">--:--:--</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">PROGRESS</div>
+            <div id="metricProgress" class="metric-value">0.0%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">REMAINING</div>
+            <div id="metricRemaining" class="metric-value">-- KM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Journey Control Actions -->
+      <div class="card">
+        <div class="section-eyebrow" style="margin-bottom: 0.85rem;">DISPATCH CONTROLS</div>
+        <div class="action-grid">
+          <button id="btnStart" onclick="apiAction('start')" class="btn-action btn-action-start">
+            ▶ START BUS
+          </button>
+          <button id="btnPause" onclick="apiAction('pause')" class="btn-action btn-action-pause">
+            ⏸ PAUSE
+          </button>
+          <button id="btnResume" onclick="apiAction('resume')" class="btn-action btn-action-resume">
+            ⏵ RESUME
+          </button>
+          <button id="btnReset" onclick="apiAction('reset')" class="btn-action btn-action-reset">
+            ↺ RESET TO IDLE
+          </button>
+        </div>
+      </div>
+
+      <!-- Schedule & Speed Duration Configuration -->
+      <div class="card">
+        <div class="section-eyebrow" style="margin-bottom: 0.25rem;">ROUTE TRANSIT DURATION</div>
+        <p class="subtext">Adjust transit duration. Setting 5 minutes enables fast movement across all checkpoints.</p>
+
+        <div class="preset-grid">
+          <button onclick="setDuration(5)" class="btn-preset">5 Mins (Fast)</button>
+          <button onclick="setDuration(30)" class="btn-preset">30 Mins (Demo)</button>
+          <button onclick="setDuration(120)" class="btn-preset">2 Hours</button>
+          <button onclick="setDuration(360)" class="btn-preset">6 Hours (Real)</button>
+        </div>
+
+        <div class="input-row">
+          <input id="customDuration" type="number" min="1" max="1440" value="360" />
+          <span class="input-row-unit">MINUTES</span>
+          <button onclick="setDuration(document.getElementById('customDuration').value)" class="btn-secondary">
+            APPLY
+          </button>
+        </div>
+      </div>
+
+      <!-- PNR Code Management -->
+      <div class="card">
+        <div class="section-header-row" style="margin-bottom: 0.25rem;">
+          <div class="section-eyebrow">JOURNEY PNR KEY</div>
+          <div id="activePnrBadge" class="status-badge running">
+            ACTIVE: JD-7842
+          </div>
+        </div>
+        <p class="subtext">Passengers enter this PNR along with last name 'bhatnagar' on the public tracking portal.</p>
+
+        <form onsubmit="handleUpdatePnr(event)" class="input-row">
+          <input id="pnrEditInput" type="text" value="JD-7842" placeholder="e.g. JD-7842" style="width: 180px;" />
+          <button type="submit" class="btn-secondary">
+            UPDATE PNR
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    STANDALONE FLEET DISPATCH • AUTHORITATIVE CONTROL CONSOLE • PORT 3001
+  </footer>
+
+  <script>
+    let authToken = sessionStorage.getItem('ops_admin_token') || '';
+    let currentStatus = 'idle';
+
+    function init() {
+      if (authToken) {
+        verifyToken(authToken);
+      } else {
+        showLogin();
+      }
+      setInterval(pollTelemetry, 2500);
+    }
+
+    async function verifyToken(token) {
+      try {
+        const res = await fetch('/api/admin/auth/verify', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        });
+        if (res.ok) {
+          authToken = token;
+          sessionStorage.setItem('ops_admin_token', token);
+          showDashboard();
+          pollTelemetry();
+          loadPnr();
+        } else {
+          showLogin();
+        }
+      } catch (e) {
+        showLogin();
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('passwordInput').value.trim();
+      if (!pwd) return;
+
+      document.getElementById('loginError').classList.add('hidden');
+      try {
+        const res = await fetch('/api/admin/auth/verify', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + pwd, 'Content-Type': 'application/json' }
+        });
+        if (res.ok) {
+          authToken = pwd;
+          sessionStorage.setItem('ops_admin_token', pwd);
+          showDashboard();
+          pollTelemetry();
+          loadPnr();
+        } else {
+          document.getElementById('loginError').textContent = 'Invalid administrative credentials.';
+          document.getElementById('loginError').classList.remove('hidden');
+        }
+      } catch (err) {
+        document.getElementById('loginError').textContent = 'Connection error. Please try again.';
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('ops_admin_token');
+      authToken = '';
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById('loginCard').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('logoutBtn').classList.add('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.remove('hidden');
+    }
+
+    async function pollTelemetry() {
+      if (!authToken) return;
+      try {
+        const res = await fetch('/api/journey', {
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        updateUI(data);
+      } catch (e) {}
+    }
+
+    function updateUI(data) {
+      currentStatus = data.journey.status;
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = currentStatus.toUpperCase();
+
+      if (currentStatus === 'running') {
+        badge.className = 'status-badge running';
+      } else if (currentStatus === 'paused') {
+        badge.className = 'status-badge paused';
+      } else {
+        badge.className = 'status-badge idle';
+      }
+
+      document.getElementById('btnStart').disabled = currentStatus !== 'idle';
+      document.getElementById('btnPause').disabled = currentStatus !== 'running';
+      document.getElementById('btnResume').disabled = currentStatus !== 'paused';
+      document.getElementById('btnReset').disabled = currentStatus === 'idle';
+
+      const sim = data.simulation;
+      document.getElementById('metricSpeed').textContent = (data.bus?.currentSpeedKmh || (currentStatus === 'running' ? 64 : 0)) + ' KM/H';
+      document.getElementById('metricElapsed').textContent = formatSeconds(sim.currentElapsedSeconds);
+      document.getElementById('metricProgress').textContent = (sim.progress * 100).toFixed(1) + '%';
+      document.getElementById('metricRemaining').textContent = (sim.distanceRemainingMeters / 1000).toFixed(1) + ' KM';
+    }
+
+    function formatSeconds(sec) {
+      const s = Math.floor(sec || 0);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const rem = s % 60;
+      return [h, m, rem].map(v => v.toString().padStart(2, '0')).join(':');
+    }
+
+    async function apiAction(action) {
+      try {
+        const body = action === 'reset' ? { confirm: true } : {};
+        const res = await fetch(`/api/admin/journey/${action}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          showFeedback(`Action '${action.toUpperCase()}' completed successfully.`, 'success');
+          pollTelemetry();
+        } else {
+          const err = await res.json();
+          showFeedback(err.message || 'Action failed', 'error');
+        }
+      } catch (e) {
+        showFeedback(e.message, 'error');
+      }
+    }
+
+    async function setDuration(mins) {
+      const minutes = parseInt(mins, 10);
+      if (!minutes || minutes < 1) return;
+      try {
+        const res = await fetch('/api/admin/journey/config', {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration_seconds: minutes * 60 })
+        });
+        if (res.ok) {
+          showFeedback(`Route duration updated to ${minutes} minutes.`, 'success');
+          pollTelemetry();
+        }
+      } catch (e) {
+        showFeedback(e.message, 'error');
+      }
+    }
+
+    async function loadPnr() {
+      try {
+        const res = await fetch('/api/admin/journey/pnr', {
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const p = d.pnr_code || 'JD-7842';
+          document.getElementById('activePnrBadge').textContent = 'ACTIVE: ' + p;
+          document.getElementById('pnrEditInput').value = p;
+        }
+      } catch (e) {}
+    }
+
+    async function handleUpdatePnr(e) {
+      e.preventDefault();
+      const val = document.getElementById('pnrEditInput').value.trim().toUpperCase();
+      if (!val) return;
+      try {
+        const res = await fetch('/api/admin/journey/pnr', {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pnr: val })
+        });
+        if (res.ok) {
+          showFeedback(`PNR updated to '${val}'.`, 'success');
+          loadPnr();
+        } else {
+          showFeedback('Failed to update PNR', 'error');
+        }
+      } catch (e) {
+        showFeedback(e.message, 'error');
+      }
+    }
+
+    function showFeedback(msg, type) {
+      const el = document.getElementById('feedbackAlert');
+      const txt = document.getElementById('feedbackText');
+      txt.textContent = msg;
+      el.className = `feedback-alert ${type === 'success' ? 'success' : 'error'}`;
+      el.classList.remove('hidden');
+      setTimeout(hideFeedback, 4000);
+    }
+
+    function hideFeedback() {
+      document.getElementById('feedbackAlert').classList.add('hidden');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

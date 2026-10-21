@@ -1,0 +1,92 @@
+@import "leaflet/dist/leaflet.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: #222222;
+  }
+
+  body {
+    background-color: #0A0A0A;
+    color: #F5F5F5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Ensure Leaflet fills container smoothly */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background-color: #e5e3df; /* Standard OSM tile background */
+}
+
+/* Restrained, minimal Leaflet controls styling */
+.leaflet-control-zoom {
+  border: 1px solid #222222 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: #161616 !important;
+  color: #F5F5F5 !important;
+  border-bottom: 1px solid #242424 !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #222222 !important;
+  color: #FFFFFF !important;
+}
+
+/* Subtle attribution font */
+.leaflet-control-attribution {
+  background-color: rgba(10, 10, 10, 0.8) !important;
+  color: #858585 !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-top-left-radius: 4px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #A0A0A0 !important;
+  text-decoration: underline !important;
+}
+
+/* Vehicle marker rotational transform transitions */
+.vehicle-marker-icon {
+  transition: transform 0.15s ease-out;
+  transform-origin: center center;
+}
+
+/* Minimal subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #242424;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out forwards;
+}
