@@ -728,11 +728,12 @@
           <button onclick="setDuration(5)" class="btn-preset">5 Mins (Fast)</button>
           <button onclick="setDuration(30)" class="btn-preset">30 Mins (Demo)</button>
           <button onclick="setDuration(120)" class="btn-preset">2 Hours</button>
-          <button onclick="setDuration(360)" class="btn-preset">6 Hours (Real)</button>
+          <button onclick="setDuration(360)" class="btn-preset">6 Hours</button>
+          <button onclick="setDuration(660)" class="btn-preset" style="border-color: var(--emerald-border); color: var(--emerald);">11 Hours (Real)</button>
         </div>
 
         <div class="input-row">
-          <input id="customDuration" type="number" min="1" max="1440" value="360" />
+          <input id="customDuration" type="number" min="1" max="1440" value="660" />
           <span class="input-row-unit">MINUTES</span>
           <button onclick="setDuration(document.getElementById('customDuration').value)" class="btn-secondary">
             APPLY

@@ -20,7 +20,7 @@ const DEFAULT_JOURNEY: Journey = {
   started_at: null,
   paused_at: null,
   elapsed_before_pause_seconds: 0.0,
-  duration_seconds: 28800.0, // 8 hours default
+  duration_seconds: 39600.0, // 11 hours default (Jaipur to Dehradun)
   total_distance_meters: RouteService.getRoute().totalDistanceMeters,
   pnr_code: 'JD-7842',
   pnr_hash: PnrService.hashPnr('JD-7842'),
@@ -37,7 +37,18 @@ export class LocalJourneyRepository implements IJourneyRepository {
   private inMemoryCache: Journey | null = null;
 
   constructor(filePath?: string) {
-    this.filePath = filePath || path.resolve(process.cwd(), 'data', 'journey.json');
+    if (filePath) {
+      this.filePath = filePath;
+    } else {
+      const candidates = [
+        path.resolve(process.cwd(), 'data', 'journey.json'),
+        path.resolve(process.cwd(), 'backend', 'data', 'journey.json'),
+      ];
+      const found = candidates.find((p) => fs.existsSync(p));
+      this.filePath = found || (fs.existsSync(path.resolve(process.cwd(), 'backend'))
+        ? path.resolve(process.cwd(), 'backend', 'data', 'journey.json')
+        : path.resolve(process.cwd(), 'data', 'journey.json'));
+    }
     this.ensureInitialized();
   }
 
@@ -110,10 +121,15 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
       .select('*')
       .order('created_at', { ascending: true })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
-      throw new Error(`Supabase query failed: ${error?.message || 'No journey row found'}`);
+    if (error) {
+      throw new Error(`Supabase query failed: ${error.message}`);
+    }
+
+    if (!data) {
+      console.log('[SupabaseJourneyRepository] Table empty, seeding default 11-hour journey...');
+      return await this.updateJourney(DEFAULT_JOURNEY);
     }
 
     return {
@@ -126,6 +142,8 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
       elapsed_before_pause_seconds: Number(data.elapsed_before_pause_seconds),
       duration_seconds: Number(data.duration_seconds),
       total_distance_meters: Number(data.total_distance_meters),
+      pnr_code: data.pnr_code || 'JD-7842',
+      pnr_hash: data.pnr_hash || PnrService.hashPnr(data.pnr_code || 'JD-7842'),
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -134,7 +152,8 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
   public async updateJourney(journey: Journey): Promise<Journey> {
     const { data, error } = await this.client
       .from('journeys')
-      .update({
+      .upsert({
+        id: journey.id,
         origin: journey.origin,
         destination: journey.destination,
         status: journey.status,
@@ -143,9 +162,10 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
         elapsed_before_pause_seconds: journey.elapsed_before_pause_seconds,
         duration_seconds: journey.duration_seconds,
         total_distance_meters: journey.total_distance_meters,
+        pnr_code: journey.pnr_code || 'JD-7842',
+        pnr_hash: journey.pnr_hash || PnrService.hashPnr(journey.pnr_code || 'JD-7842'),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', journey.id)
       .select()
       .single();
 
@@ -163,6 +183,8 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
       elapsed_before_pause_seconds: Number(data.elapsed_before_pause_seconds),
       duration_seconds: Number(data.duration_seconds),
       total_distance_meters: Number(data.total_distance_meters),
+      pnr_code: data.pnr_code,
+      pnr_hash: data.pnr_hash,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };

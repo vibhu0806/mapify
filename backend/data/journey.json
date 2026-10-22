@@ -3,13 +3,13 @@
   "origin": "Jaipur, Rajasthan",
   "destination": "Dehradun, Uttarakhand",
   "status": "running",
-  "started_at": "2026-10-22T17:00:00.000Z",
+  "started_at": "2026-10-22T22:16:26.162Z",
   "paused_at": null,
   "elapsed_before_pause_seconds": 0,
-  "duration_seconds": 28800,
-  "total_distance_meters": 535000.0,
-  "created_at": "2026-10-20T18:37:19.531Z",
-  "updated_at": "2026-10-22T18:00:00.000Z",
+  "duration_seconds": 39600,
+  "total_distance_meters": 592400,
   "pnr_code": "JD-7842",
-  "pnr_hash": "011516bc7d9bb55040a428945767bae6317edd96fadf75f2f665574bf35a278d"
+  "pnr_hash": "011516bc7d9bb55040a428945767bae6317edd96fadf75f2f665574bf35a278d",
+  "created_at": "2026-10-22T22:16:26.162Z",
+  "updated_at": "2026-10-22T22:16:26.162Z"
 }
