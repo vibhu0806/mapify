@@ -20,7 +20,7 @@ const DEFAULT_JOURNEY: Journey = {
   started_at: null,
   paused_at: null,
   elapsed_before_pause_seconds: 0.0,
-  duration_seconds: 21600.0, // 6 hours default
+  duration_seconds: 28800.0, // 8 hours default
   total_distance_meters: RouteService.getRoute().totalDistanceMeters,
   pnr_code: 'JD-7842',
   pnr_hash: PnrService.hashPnr('JD-7842'),

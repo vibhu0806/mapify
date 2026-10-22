@@ -59,7 +59,7 @@ const createStopIcon = (type: string) => {
     className: 'custom-stop-marker',
     html: `
       <div style="position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
-        <div style="position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #0A0A0A; border: 1.5px solid ${color}; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+        <div style="position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; border: 1.5px solid ${color}; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
           ${label}
         </div>
       </div>
@@ -161,7 +161,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
   return (
     <div className="relative h-full w-full overflow-hidden">
       <MapContainer
-        center={[28.6139, 77.2090]} // Centered along Delhi-NCR corridor between Jaipur & Dehradun
+        center={[28.6139, 77.2090]} // Centered along Jaipur-Delhi-Dehradun corridor
         zoom={7}
         scrollWheelZoom={true}
         className="h-full w-full"
@@ -217,7 +217,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
               <div className="p-1">
                 <div className="text-[10px] font-mono text-green-700 uppercase font-semibold">ORIGIN DEPOT</div>
                 <div className="font-bold text-sm text-gray-900">{routeData.origin.name}</div>
-                <div className="text-gray-500 text-[11px] mt-0.5">Platform Bay 4, Central Bus Station</div>
+                <div className="text-gray-500 text-[11px] mt-0.5">Platform Bay 4, Sindhi Camp Central Depot</div>
               </div>
             </Popup>
           </Marker>
@@ -233,7 +233,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
             <Popup className="font-sans text-xs">
               <div className="p-1 min-w-[190px]">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-blue-600 font-semibold">
-                  {stop.type === 'food_halt' ? '🍽 Refreshment / Dinner Halt' : stop.type === 'boarding' ? '🚏 Passenger Stop' : '📍 Highway Checkpoint'}
+                  {stop.type === 'food_halt' ? 'Refreshment / Food Halt' : stop.type === 'boarding' ? 'Passenger Boarding Bay' : 'Expressway Checkpoint'}
                 </div>
                 <div className="font-bold text-sm text-gray-900 mt-0.5">{stop.name}</div>
                 <div className="text-[11px] text-gray-600 mt-0.5">{stop.landmark}</div>
@@ -260,7 +260,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
               <div className="p-1">
                 <div className="text-[10px] font-mono text-red-700 uppercase font-semibold">FINAL DESTINATION</div>
                 <div className="font-bold text-sm text-gray-900">{routeData.destination.name}</div>
-                <div className="text-gray-500 text-[11px] mt-0.5">Inter-State Bus Terminal, Haridwar Bypass</div>
+                <div className="text-gray-500 text-[11px] mt-0.5">ISBT Terminal, Haridwar Bypass, Dehradun</div>
               </div>
             </Popup>
           </Marker>
@@ -278,7 +278,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
                   <span>RJ-14-PB-4289</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-mono">BUS</span>
                 </div>
-                <div className="text-[11px] text-gray-600 font-medium mt-0.5">Goldline AC Express Coach</div>
+                <div className="text-[11px] text-gray-600 font-medium mt-0.5">Maharani Travels • Volvo 9600 AC</div>
                 <div className="mt-1.5 pt-1.5 border-t border-gray-200 flex flex-col gap-0.5 text-[10px]">
                   <div className="text-green-700 font-semibold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
@@ -300,11 +300,10 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
           type="button"
           onClick={onToggleFollow}
           title={followMode ? "Disable camera follow" : "Enable camera follow"}
-          className={`h-9 w-9 rounded-md flex items-center justify-center transition-all duration-200 border shadow-md ${
-            followMode
-              ? 'bg-blue-600 text-white border-blue-700'
-              : 'bg-surface/90 hover:bg-surface-hover text-primary-muted hover:text-primary border-border-subtle'
-          }`}
+          className={`h-9 w-9 rounded-md flex items-center justify-center transition-all duration-200 border shadow-md ${followMode
+              ? 'bg-[#00529B] text-white border-[#004077]'
+              : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border-slate-300'
+            }`}
         >
           <Locate className="h-4 w-4" />
         </button>
@@ -313,7 +312,7 @@ export const LeafletMapTracker: React.FC<LeafletMapTrackerProps> = ({
           type="button"
           onClick={() => setFitBoundsTrigger(prev => prev + 1)}
           title="Fit full route view"
-          className="h-9 w-9 rounded-md bg-surface/90 hover:bg-surface-hover text-primary-muted hover:text-primary flex items-center justify-center border border-border-subtle shadow-md transition-colors"
+          className="h-9 w-9 rounded-md bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 flex items-center justify-center border border-slate-300 shadow-md transition-colors"
         >
           <Maximize2 className="h-4 w-4" />
         </button>

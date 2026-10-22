@@ -79,14 +79,14 @@ export class JourneyController {
 
           return {
             vehicleNumber: 'RJ-14-PB-4289',
-            operator: 'Rajasthan State Road Transport Corp (Goldline AC Express)',
-            busModel: 'BharatBenz 1624 AC 2+1 Sleeper Coach',
-            serviceType: 'Superfast Express (Jaipur ⇄ Dehradun)',
+            operator: 'Maharani Travels',
+            busModel: 'Volvo 9600 AC Multi-Axle Sleeper',
+            serviceType: 'Superfast Intercity (Jaipur ⇄ Dehradun)',
             currentSpeedKmh: currentSpeed,
             telemetryStatus: journey.status === 'running' ? 'Active - Real-Time Telematics' : journey.status === 'paused' ? 'Vehicle Idle / Scheduled Halt' : 'Terminal Standby',
             gpsLock: '3D High Accuracy (12 Sats)',
             lastPingSecondsAgo: secondsAgo,
-            nextStop: nextStop ? nextStop.name : (journey.status === 'completed' ? 'Arrived at Destination' : 'Jaipur Sindhi Camp Central Bus Stand'),
+            nextStop: nextStop ? nextStop.name : (journey.status === 'completed' ? 'Arrived at Destination' : 'Jaipur Sindhi Camp'),
             nextStopDistanceMeters: nextStop ? Math.max(0, nextStop.distanceMeters - timing.distanceTravelledMeters) : 0,
           };
         })(),

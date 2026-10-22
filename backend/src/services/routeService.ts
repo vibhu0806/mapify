@@ -142,9 +142,9 @@ export const REAL_BUS_STOPS: BusStop[] = [
   {
     id: 'stop-4',
     sequence: 4,
-    name: 'Kotputli Highway King Halt',
+    name: 'Kotputli Highway Halt',
     city: 'Kotputli',
-    landmark: 'Hotel Highway King Complex, NH 48',
+    landmark: 'Highway Rest Area, NH 48',
     coordinates: { lat: 27.7050, lng: 76.2050 },
     scheduledHaltMinutes: 10,
     type: 'transit_stop',
@@ -155,7 +155,7 @@ export const REAL_BUS_STOPS: BusStop[] = [
     sequence: 5,
     name: 'Behror RTDC Midway',
     city: 'Behror',
-    landmark: 'Rajasthan Tourism Midway Restaurant & Rest Area',
+    landmark: 'Midway Restaurant & Rest Area',
     coordinates: { lat: 27.8920, lng: 76.2840 },
     scheduledHaltMinutes: 30,
     type: 'food_halt',
@@ -241,9 +241,9 @@ export const REAL_BUS_STOPS: BusStop[] = [
   {
     id: 'stop-13',
     sequence: 13,
-    name: 'Muzaffarnagar Cheetal Grand',
+    name: 'Muzaffarnagar Grand Midway',
     city: 'Muzaffarnagar',
-    landmark: 'Cheetal Grand Highway Resort & Food Court',
+    landmark: 'Highway Rest Area & Food Court',
     coordinates: { lat: 29.4720, lng: 77.7080 },
     scheduledHaltMinutes: 20,
     type: 'food_halt',
@@ -304,7 +304,7 @@ const RAW_HIGHWAY_WAYPOINTS: RoutePoint[] = [
   { lat: 27.1650, lng: 75.9540 }, // Manoharpur
   { lat: 27.3880, lng: 75.9620 }, // Shahpura Toll
   { lat: 27.5300, lng: 76.0820 }, // Paota
-  { lat: 27.7050, lng: 76.2050 }, // Kotputli Highway King
+  { lat: 27.7050, lng: 76.2050 }, // Kotputli
   { lat: 27.8920, lng: 76.2840 }, // Behror RTDC Midway
   { lat: 28.0050, lng: 76.3880 }, // Neemrana
   { lat: 28.1150, lng: 76.4920 }, // Bawal
@@ -325,7 +325,7 @@ const RAW_HIGHWAY_WAYPOINTS: RoutePoint[] = [
   { lat: 28.8950, lng: 77.6720 }, // Partapur / Meerut Bypass
   { lat: 29.0450, lng: 77.7050 }, // Daurala
   { lat: 29.1820, lng: 77.7280 }, // Khatauli
-  { lat: 29.4720, lng: 77.7080 }, // Muzaffarnagar Cheetal Grand
+  { lat: 29.4720, lng: 77.7080 }, // Muzaffarnagar
   { lat: 29.6950, lng: 77.8020 }, // Purqazi
   { lat: 29.8550, lng: 77.8880 }, // Roorkee Military Cantt / Bus Stand
   { lat: 29.9850, lng: 78.0920 }, // Bahadrabad / Haridwar bypass
@@ -408,15 +408,13 @@ export class RouteService {
     const origin = this.getOrigin();
     const dest = this.getDestination();
 
-    // Via points through actual bus highway corridor (Behror, Gurugram, Delhi Kashmiri Gate, Meerut, Muzaffarnagar, Roorkee)
+    // Via points through Jaipur -> Delhi -> Meerut -> Haridwar -> Dehradun corridor
     const viaWaypoints = [
       origin.coordinates,
-      { lat: 27.8920, lng: 76.2840 }, // Behror
-      { lat: 28.4720, lng: 77.0725 }, // Gurugram
-      { lat: 28.6675, lng: 77.2280 }, // Delhi Kashmiri Gate
-      { lat: 28.8950, lng: 77.6720 }, // Meerut Bypass
-      { lat: 29.4720, lng: 77.7080 }, // Muzaffarnagar
-      { lat: 29.8550, lng: 77.8880 }, // Roorkee
+      { lat: 28.4720, lng: 77.0725 }, // Gurugram IFFCO Chowk
+      { lat: 28.6665, lng: 77.2332 }, // Delhi Kashmiri Gate ISBT
+      { lat: 28.9845, lng: 77.7064 }, // Meerut Bypass
+      { lat: 29.9457, lng: 78.1642 }, // Haridwar
       dest.coordinates,
     ];
 

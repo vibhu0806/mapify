@@ -7,21 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0A0A0A',
+        background: '#FFFFFF',
         surface: {
-          DEFAULT: '#121212',
-          card: '#161616',
-          panel: '#1A1A1A',
-          hover: '#222222',
+          DEFAULT: '#FFFFFF',
+          card: '#FFFFFF',
+          panel: '#F8FAFC',
+          hover: '#F1F5F9',
+        },
+        brand: {
+          blue: '#00529B',
+          blueHover: '#004077',
+          green: '#108C38',
+          greenHover: '#0E7A31',
+          accent: '#FFB800',
         },
         border: {
-          subtle: '#222222',
-          muted: '#2A2A2A',
+          subtle: '#E2E8F0',
+          muted: '#CBD5E1',
         },
         primary: {
-          DEFAULT: '#F5F5F5',
-          muted: '#858585',
-          dim: '#555555',
+          DEFAULT: '#0F172A',
+          muted: '#475569',
+          dim: '#94A3B8',
         },
         accent: {
           green: '#10B981',
