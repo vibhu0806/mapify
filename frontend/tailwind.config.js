@@ -17,9 +17,18 @@ export default {
         brand: {
           blue: '#00529B',
           blueHover: '#004077',
-          green: '#108C38',
-          greenHover: '#0E7A31',
+          green: '#73D200',
+          greenHover: '#65BE00',
           accent: '#FFB800',
+        },
+        flixbus: {
+          green: '#73D200',
+          greenHover: '#65BE00',
+          greenLight: '#E8F8CE',
+          greenBadge: '#D6F599',
+          orange: '#FF5C00',
+          dark: '#111827',
+          gray: '#F3F4F6',
         },
         border: {
           subtle: '#E2E8F0',

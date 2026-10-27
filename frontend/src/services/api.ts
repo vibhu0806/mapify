@@ -40,14 +40,18 @@ export const api = {
     localStorage.removeItem(PNR_STORAGE_KEY);
   },
 
-  // Public PNR Validation
-  async validatePnr(pnr: string, lastName: string): Promise<{ valid: boolean; journeyId: string; pnrToken: string }> {
+  // Public PNR Validation (only PNR required)
+  async validatePnr(pnr: string, lastName?: string): Promise<{ valid: boolean; journeyId: string; pnrToken: string }> {
+    const payload: { pnr: string; lastName?: string } = { pnr: pnr.trim().toUpperCase() };
+    if (lastName) {
+      payload.lastName = lastName;
+    }
     const res = await fetch(`${API_BASE}/pnr/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ pnr, lastName }),
+      body: JSON.stringify(payload),
     });
     const result = await handleResponse<{ valid: boolean; journeyId: string; pnrToken: string }>(res);
     if (result.pnrToken) {

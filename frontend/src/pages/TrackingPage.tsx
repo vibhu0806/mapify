@@ -20,8 +20,7 @@ export const TrackingPage: React.FC = () => {
     const adminToken = sessionStorage.getItem('jaipur_dehradun_admin_token');
 
     if (!pnrToken && !adminToken) {
-      // Default fallback demo authentication
-      api.validatePnr('JD-7842', 'bhatnagar').catch(() => {});
+      navigate('/', { replace: true });
     }
   }, [navigate]);
 

@@ -99,9 +99,7 @@ export function useJourneySync(pollIntervalMs = 3500): UseJourneySyncResult {
     try {
       let token = api.getPnrToken();
       if (!token) {
-        // Ensure valid passenger session across refreshes without dropping state
-        const auth = await api.validatePnr('JD-7842', 'bhatnagar').catch(() => null);
-        token = auth?.pnrToken || null;
+        throw new Error('PNR authorization required');
       }
 
       const data = await api.getJourney();

@@ -4,22 +4,45 @@ import { api, ApiError } from '../services/api.js';
 import { TopNavigation } from '../components/TopNavigation.js';
 import {
   MapPin,
-  ArrowRight,
+  ArrowLeftRight,
+  Calendar,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Search,
+  Shield,
+  Ticket,
+  Globe,
   Loader2,
   CheckCircle,
-  ExternalLink,
-  Navigation,
-  Clock
+  X,
+  Compass,
+  Radio
 } from 'lucide-react';
 
 export const PnrEntryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [mobileOrNameInput, setMobileOrNameInput] = useState('');
+
+  // Card Mode: 'book' or 'track'
+  const [activeMode, setActiveMode] = useState<'book' | 'track'>('book');
+
+  // Booking Card State
+  const [tripType, setTripType] = useState<'oneway' | 'roundtrip'>('oneway');
+  const [fromCity, setFromCity] = useState('Jaipur');
+  const [toCity, setToCity] = useState('Hyderabad');
+  const [departureDate, setDepartureDate] = useState('Today, 27 Oct');
+  const [passengers, setPassengers] = useState('1 Adult');
+
+  // Active Tab for "Popular Cities and Connections"
+  const [popularTab, setPopularTab] = useState<'cities' | 'connections'>('cities');
+
+  // Trip Tracker State (PNR ONLY)
+  const [showTrackerModal, setShowTrackerModal] = useState(false);
   const [pnrInput, setPnrInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasExistingSession, setHasExistingSession] = useState(false);
-  const [activeAd, setActiveAd] = useState<'ramayana' | 'myntra' | 'meesho'>('ramayana');
 
   useEffect(() => {
     const existingToken = api.getPnrToken();
@@ -34,619 +57,874 @@ export const PnrEntryPage: React.FC = () => {
     }
   }, []);
 
-  const handleQuickFill = () => {
-    setPnrInput('JD-7842');
-    setMobileOrNameInput('Bhatnagar');
-    setErrorMessage(null);
+  const handleSwapCities = () => {
+    setFromCity(toCity);
+    setToCity(fromCity);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanPnr = pnrInput.trim();
-    const cleanSecond = mobileOrNameInput.trim();
+  const handleLiveTrackSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanPnr = pnrInput.trim().toUpperCase();
 
-    if (!cleanPnr && !cleanSecond) {
-      setErrorMessage('Please enter either your PNR Number or Mobile Number.');
+    if (!cleanPnr) {
+      setErrorMessage('Please enter your Booking PNR.');
       return;
     }
-
-    const pnrToUse = cleanPnr || 'JD-7842';
-    const isMobileDigits = /^\d+$/.test(cleanSecond);
-    const lastNameToUse = (!cleanSecond || isMobileDigits) ? 'Bhatnagar' : cleanSecond;
 
     setLoading(true);
     setErrorMessage(null);
 
     try {
-      const response = await api.validatePnr(pnrToUse, lastNameToUse);
+      const response = await api.validatePnr(cleanPnr);
       if (response.valid && response.pnrToken) {
         navigate('/track');
       } else {
-        setErrorMessage('Invalid PNR or Passenger Details. Please use Demo PNR: JD-7842 / Bhatnagar.');
+        setErrorMessage('Invalid PNR. Please verify your booking details.');
       }
     } catch (err: any) {
       if (err instanceof ApiError && err.status === 429) {
         setErrorMessage(err.message || 'Too many attempts. Please wait a moment and try again.');
       } else {
-        setErrorMessage('Invalid PNR or Passenger Details. Click "Demo PNR: JD-7842" to test.');
+        setErrorMessage(err.message || 'Invalid PNR. Please verify your booking details.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResumeExistingSession = () => {
-    navigate('/track');
+  const handleSearchClick = () => {
+    // Switch to tracker or track
+    setActiveMode('track');
+    setShowTrackerModal(true);
   };
+
+  const handleSelectCity = (city: string) => {
+    setToCity(city);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Popular cities list matching Screenshot 1
+  const citiesCol1 = ['Delhi', 'Dehradun', 'Pune', 'Greater Noida', 'Manali'];
+  const citiesCol2 = ['Bengaluru', 'Gurugram', 'Jaipur', 'Lucknow', 'Haridwar'];
+  const citiesCol3 = ['Hyderabad', 'Vijayawada', 'Rishikesh', 'Mumbai', 'Madurai'];
+  const citiesCol4 = ['Chennai', 'Chandigarh', 'Visakhapatnam', 'Bareilly', 'Goa'];
+
+  const connectionsCol1 = ['Delhi ➔ Jaipur', 'Delhi ➔ Dehradun', 'Delhi ➔ Chandigarh', 'Delhi ➔ Haridwar', 'Delhi ➔ Manali'];
+  const connectionsCol2 = ['Jaipur ➔ Dehradun', 'Jaipur ➔ Delhi', 'Bengaluru ➔ Hyderabad', 'Bengaluru ➔ Chennai', 'Gurugram ➔ Jaipur'];
+  const connectionsCol3 = ['Mumbai ➔ Pune', 'Mumbai ➔ Goa', 'Hyderabad ➔ Vijayawada', 'Hyderabad ➔ Bengaluru', 'Rishikesh ➔ Delhi'];
+  const connectionsCol4 = ['Chennai ➔ Madurai', 'Chandigarh ➔ Manali', 'Dehradun ➔ Delhi', 'Lucknow ➔ Delhi', 'Pune ➔ Goa'];
 
   return (
     <div className="min-h-screen w-full bg-white text-slate-800 flex flex-col font-sans antialiased">
-      {/* 1. Header Navigation */}
-      <TopNavigation status="running" />
+      {/* 1. Header Navigation - FlixBus Lime Green */}
+      <TopNavigation onOpenTripTracker={() => setShowTrackerModal(true)} />
 
-      {/* 2. Breadcrumb Bar */}
-      <div className="w-full bg-[#F8FAFC] border-b border-slate-200 py-2.5 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-600">
-          <div className="flex items-center gap-2 font-medium">
-            <a href="/" className="text-[#00529B] hover:underline">Home</a>
-            <span>|</span>
-            <span className="text-slate-900 font-semibold">Live Tracking</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-semibold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Jaipur ➔ Dehradun Live Corridor Active
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-3 text-[11px] font-mono text-slate-500">
-            <span>AIS-140 GPS TELEMATICS</span>
-            <span>•</span>
-            <span>JAIPUR ⇄ DEHRADUN CORRIDOR</span>
-          </div>
+      {/* 2. Hero Section with Scenic Bus Background & Floating Booking Card */}
+      <section className="relative w-full min-h-[520px] sm:min-h-[580px] flex items-center justify-center overflow-hidden">
+        {/* Background Image: Scenic FlixBus in mountain river valley */}
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+          style={{
+            backgroundImage: `url('/media/flixbus_hero.jpg')`,
+            backgroundPosition: 'center 40%',
+          }}
+        >
+          {/* Subtle natural gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/45" />
         </div>
-      </div>
 
-      {/* 2. Main Hero Tracking Section */}
-      <section className="relative w-full bg-gradient-to-b from-[#F1F5F9]/50 via-white to-white overflow-hidden py-8 sm:py-12 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Column: The Signature Blue Tracking Card */}
-            <div className="lg:col-span-5 w-full">
-              <div className="bg-[#00529B] text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                      Track Your Bus
-                    </h1>
-                    <span className="text-2xl">🚌</span>
-                  </div>
+        {/* Hero Content Container */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col items-center justify-center">
+          {/* Title: "Book bus tickets online" */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white text-center tracking-tight mb-8 drop-shadow-md">
+            Book bus tickets online
+          </h1>
 
-                  <p className="text-blue-100 text-xs mb-6 leading-relaxed">
-                    Enter your registered mobile number or PNR to view real-time location, speed and upcoming halts.
-                  </p>
+          {/* Floating Booking Search Card */}
+          <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl p-4 sm:p-6 border border-slate-100">
+            {/* Top Navigation Tabs inside Card: Book Tickets & Trip Tracker */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-5 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMode('book');
+                    setErrorMessage(null);
+                  }}
+                  className={`pb-1 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                    activeMode === 'book'
+                      ? 'border-[#73D200] text-slate-900'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Book Tickets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMode('track');
+                    setErrorMessage(null);
+                  }}
+                  className={`pb-1 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeMode === 'track'
+                      ? 'border-[#73D200] text-slate-900'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Trip Tracker (PNR)</span>
+                </button>
+              </div>
 
-                  {/* Active Session Resume Prompt */}
-                  {hasExistingSession && (
-                    <div className="mb-5 p-3 rounded-lg bg-white/10 border border-white/20 flex items-center justify-between">
-                      <div className="text-left">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" /> LIVE TRIP IN PROGRESS
-                        </div>
-                        <div className="text-xs text-white/90 font-mono mt-0.5">
-                          RJ-14-PB-4289 (Jaipur-Dehradun)
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleResumeExistingSession}
-                        className="px-3 py-1 bg-white text-[#00529B] rounded-md font-bold text-xs hover:bg-blue-50 transition-colors flex items-center gap-1"
-                      >
-                        Resume <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
+              {activeMode === 'book' ? (
+                <div className="flex items-center gap-5 text-sm font-semibold text-slate-800">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span className="relative flex items-center justify-center w-4 h-4 rounded-full border-2 border-slate-700">
+                      {tripType === 'oneway' && (
+                        <span className="w-2 h-2 rounded-full bg-slate-900" />
+                      )}
+                    </span>
+                    <input
+                      type="radio"
+                      name="tripType"
+                      checked={tripType === 'oneway'}
+                      onChange={() => setTripType('oneway')}
+                      className="sr-only"
+                    />
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm">One Way</span>
+                  </label>
 
-                  {/* Form */}
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <div>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span className="relative flex items-center justify-center w-4 h-4 rounded-full border-2 border-slate-400">
+                      {tripType === 'roundtrip' && (
+                        <span className="w-2 h-2 rounded-full bg-slate-900" />
+                      )}
+                    </span>
+                    <input
+                      type="radio"
+                      name="tripType"
+                      checked={tripType === 'roundtrip'}
+                      onChange={() => setTripType('roundtrip')}
+                      className="sr-only"
+                    />
+                    <span className="text-slate-600 font-medium hover:text-slate-900 text-xs sm:text-sm">Round Trip</span>
+                  </label>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-500 font-medium">
+                  Real-time AIS-140 GPS Telematics
+                </span>
+              )}
+            </div>
+
+            {activeMode === 'track' ? (
+              /* PNR-ONLY TRACKING INTERFACE */
+              <form onSubmit={handleLiveTrackSubmit} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                  <div className="sm:col-span-9 relative flex flex-col justify-center border-2 border-[#73D200] rounded-xl px-4 py-2.5 bg-white shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Booking PNR
+                    </span>
+                    <div className="flex items-center gap-2.5 mt-1">
+                      <Ticket className="w-5 h-5 text-emerald-600 shrink-0" />
                       <input
                         type="text"
-                        placeholder="Enter mobile number"
-                        value={mobileOrNameInput}
-                        onChange={(e) => {
-                          setMobileOrNameInput(e.target.value);
-                          if (errorMessage) setErrorMessage(null);
-                        }}
-                        className="w-full h-12 px-4 rounded-md bg-white text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-center gap-3 text-xs font-bold text-white/80">
-                      <div className="h-[1px] flex-1 bg-white/30" />
-                      <span>OR</span>
-                      <div className="h-[1px] flex-1 bg-white/30" />
-                    </div>
-
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="PNR"
                         value={pnrInput}
                         onChange={(e) => {
                           setPnrInput(e.target.value.toUpperCase());
                           if (errorMessage) setErrorMessage(null);
                         }}
-                        className="w-full h-12 px-4 rounded-md bg-white text-slate-900 placeholder:text-slate-400 text-sm font-bold tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
+                        className="w-full text-base sm:text-lg font-black text-slate-900 uppercase tracking-wider bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="Enter PNR (e.g. JD-7842)"
+                        autoFocus
                       />
                     </div>
+                  </div>
 
-                    {errorMessage && (
-                      <div className="p-2.5 rounded bg-red-500/25 border border-red-300 text-white text-xs leading-snug">
-                        {errorMessage}
-                      </div>
-                    )}
-
+                  <div className="sm:col-span-3">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full h-12 mt-1 rounded-md bg-[#F1F5F9] hover:bg-white active:bg-slate-200 text-[#00529B] font-bold text-sm tracking-wide shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full h-[62px] rounded-xl bg-[#73D200] hover:bg-[#65be00] active:scale-[0.98] text-slate-950 font-black text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin text-[#00529B]" />
-                          <span>Connecting to GPS...</span>
+                          <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
+                          <span>Connecting...</span>
                         </>
                       ) : (
-                        <span>Live Track</span>
+                        <span>Track Bus</span>
                       )}
                     </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* Dedicated Myntra Google Display Ad Card on Login Page */}
-              <div className="mt-4 p-2.5 bg-white border border-slate-300 rounded-xl shadow-xs overflow-hidden">
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pb-1 mb-1.5 border-b border-slate-100 px-1">
-                  <span className="font-semibold text-slate-600 flex items-center gap-1">
-                    <span className="px-1 py-0.2 bg-slate-200 text-slate-700 text-[9px] font-bold">AD</span>
-                    Sponsored · myntra.com
-                  </span>
-                  <span className="text-slate-400">AdChoices ℹ️</span>
-                </div>
-                <a
-                  href="https://www.myntra.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-lg overflow-hidden border border-[#FFCCD5] hover:opacity-95 transition-opacity group"
-                >
-                  <img
-                    src="/media/promotions/myntra_fashion.jpg"
-                    alt="Myntra Big Fashion Festival - 50-80% Off"
-                    className="w-full h-32 sm:h-36 object-cover object-center"
-                  />
-                  <div className="p-2.5 bg-[#FFF0F3] flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                        <span className="text-[#FF3F6C]">Myntra Big Fashion Festival</span>
-                        <span className="text-[9px] bg-[#FF3F6C] text-white px-1 py-0.2 rounded font-bold">50-80% OFF</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">Extra ₹400 Off on 1st Order • Code: MYNTRA400</div>
-                    </div>
-                    <span className="px-3 py-1 bg-[#FF3F6C] hover:bg-[#E02D58] text-white text-[10px] font-bold uppercase rounded flex items-center gap-1 shrink-0 transition-colors shadow-2xs">
-                      Shop <ExternalLink className="w-2.5 h-2.5" />
-                    </span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            {/* Right Column: Hero Graphics Illustration */}
-            <div className="lg:col-span-7 relative flex flex-col items-center justify-center min-h-[380px] sm:min-h-[440px] px-2 sm:px-6">
-              {/* Skyline background */}
-              <div className="absolute inset-0 flex items-end justify-center pointer-events-none opacity-40">
-                <svg className="w-full h-48 sm:h-64 text-slate-300 fill-current" viewBox="0 0 800 200" preserveAspectRatio="none">
-                  <rect x="20" y="80" width="45" height="120" rx="2" fill="#CBD5E1" />
-                  <rect x="75" y="40" width="55" height="160" rx="2" fill="#94A3B8" />
-                  <rect x="140" y="90" width="40" height="110" rx="2" fill="#CBD5E1" />
-                  <rect x="190" y="30" width="65" height="170" rx="2" fill="#94A3B8" />
-                  <rect x="265" y="70" width="50" height="130" rx="2" fill="#CBD5E1" />
-                  <rect x="325" y="100" width="60" height="100" rx="2" fill="#94A3B8" />
-                  <rect x="395" y="50" width="70" height="150" rx="2" fill="#CBD5E1" />
-                  <rect x="475" y="85" width="45" height="115" rx="2" fill="#94A3B8" />
-                  <rect x="530" y="40" width="60" height="160" rx="2" fill="#CBD5E1" />
-                  <rect x="600" y="95" width="50" height="105" rx="2" fill="#94A3B8" />
-                  <circle cx="15" cy="170" r="25" fill="#86EFAC" />
-                  <circle cx="45" cy="175" r="20" fill="#4ADE80" />
-                  <circle cx="670" cy="170" r="28" fill="#86EFAC" />
-                  <circle cx="700" cy="175" r="22" fill="#4ADE80" />
-                </svg>
-              </div>
-
-              {/* Road line */}
-              <div className="absolute bottom-6 left-0 right-0 h-4 bg-slate-300 rounded-full">
-                <div className="h-0.5 border-b-2 border-dashed border-white mt-1.5" />
-              </div>
-
-              {/* Central Visual: Yellow Pin pointing to Volvo Bus */}
-              <div className="relative z-10 w-full flex flex-col md:flex-row items-center justify-between gap-6">
-                {/* Volvo Bus Graphic */}
-                <div className="relative flex flex-col items-center mt-6">
-                  {/* Yellow Location Pin */}
-                  <div className="animate-bounce mb-1">
-                    <div className="relative flex items-center justify-center w-12 h-12 bg-amber-400 rounded-full shadow-lg border-2 border-white text-slate-900">
-                      <MapPin className="w-7 h-7 fill-slate-900 text-amber-400" />
-                      <div className="absolute w-2.5 h-2.5 bg-amber-400 rounded-full -bottom-1"></div>
-                    </div>
-                  </div>
-
-                  {/* Bus Body */}
-                  <div className="relative w-72 sm:w-84 md:w-96 bg-white border-2 border-slate-300 rounded-2xl shadow-xl p-2.5 overflow-hidden">
-                    <div className="h-5 bg-[#108C38] rounded-t-lg flex items-center justify-between px-3 text-[9px] text-white font-bold tracking-wider">
-                      <span>INTERSTATE TRAVEL</span>
-                      <span>DL-01-AB-1024</span>
-                    </div>
-
-                    {/* Passenger Windows */}
-                    <div className="grid grid-cols-6 gap-1 my-2 px-1">
-                      <div className="h-8 bg-sky-200 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        👨‍✈️
-                      </div>
-                      <div className="h-8 bg-sky-100 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        😴
-                      </div>
-                      <div className="h-8 bg-sky-100 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        ☕
-                      </div>
-                      <div className="h-8 bg-sky-100 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        📱
-                      </div>
-                      <div className="h-8 bg-sky-100 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        🎧
-                      </div>
-                      <div className="h-8 bg-sky-100 rounded border border-sky-300 flex items-center justify-center text-[10px]">
-                        🥪
-                      </div>
-                    </div>
-
-                    {/* Bus Label */}
-                    <div className="flex items-center justify-between px-3 py-1 bg-slate-100 rounded">
-                      <span className="text-[11px] font-extrabold text-[#00529B] tracking-tight">
-                        interstate travel
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                        VOLVO 9600 AC SEATER / SLEEPER
-                      </span>
-                    </div>
-
-                    {/* Wheels & Clean Route Bumper */}
-                    <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-200 px-3">
-                      <div className="flex items-center gap-1">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border-4 border-slate-400 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border-4 border-slate-400 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        </div>
-                      </div>
-
-                      {/* Official Route Tag */}
-                      <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 text-[10px] text-slate-800 font-bold">
-                        <span>DELHI ⇄ AGRA YAMUNA EXPRESSWAY</span>
-                      </div>
-
-                      <div className="w-8 h-8 rounded-full bg-slate-800 border-4 border-slate-400 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                {/* Smartphone Live Tracking Mockup (Delhi -> Agra) */}
-                <div className="relative w-56 sm:w-64 bg-slate-900 p-2.5 rounded-[28px] shadow-2xl border-4 border-slate-800 text-white">
-                  <div className="w-20 h-3 bg-slate-800 rounded-full mx-auto mb-2" />
-
-                  <div className="bg-white text-slate-800 rounded-2xl p-3 text-xs">
-                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-                      <span className="font-bold text-[10px] text-[#00529B]">LIVE TRACKING</span>
-                      <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[9px] flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                        ON TIME
-                      </span>
-                    </div>
-
-                    <div className="font-bold text-slate-900 text-xs">
-                      Delhi ➔ Agra
-                    </div>
-                    <div className="text-[10px] text-slate-500 mb-2 font-mono">
-                      DL-01-AB-1024 • Service No. 102
-                    </div>
-
-                    <div className="p-2 rounded bg-slate-50 border border-slate-200 space-y-1 mb-2">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500">Speed:</span>
-                        <span className="font-mono font-bold text-emerald-600">84 km/h</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500">Next Food Halt:</span>
-                        <span className="font-semibold text-slate-700">Jewar Yamuna Plaza (20m)</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                      <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">
-                        🧔
-                      </div>
-                      <div className="text-[9px] leading-tight text-slate-600">
-                        <strong>Live GPS Synced</strong><br />
-                        Share route with family
-                      </div>
-                    </div>
+                {errorMessage && (
+                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                    {errorMessage}
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 4. REAL MYNTRA & MEESHO GOOGLE DISPLAY ADS ("addd myntra or meesho ad") */}
-      {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* 4. REAL GOVERNMENT & TOURISM DISPLAY AD BANNERS WITH IMAGES ("ads like this with imageds") */}
-      {/* ========================================================================= */}
-      <section className="w-full bg-[#F8FAFC] border-y border-slate-200 py-4 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="border border-slate-300 bg-white p-3 shadow-xs">
-            {/* Ad Header */}
-            <div className="flex items-center justify-between text-[10px] text-slate-400 pb-2 mb-2 border-b border-slate-100">
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-slate-600">Sponsored Ad</span>
-                <span>·</span>
-                <span className="text-slate-500 font-mono">
-                  {activeAd === 'ramayana' ? 'irctctourism.com/bharatgaurav' : activeAd === 'myntra' ? 'myntra.com' : 'meesho.com'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setActiveAd('ramayana')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors ${
-                      activeAd === 'ramayana'
-                        ? 'bg-[#00529B] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-[#00529B] bg-slate-100'
-                    }`}
-                  >
-                    Ramayana Yatra (IRCTC)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveAd('myntra')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-colors ${
-                      activeAd === 'myntra'
-                        ? 'bg-[#FF3F6C] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-[#FF3F6C] bg-slate-100'
-                    }`}
-                  >
-                    Myntra Fashion
-                  </button>
-                </div>
-                <span className="hidden sm:inline">AdChoices ℹ️</span>
-              </div>
-            </div>
-
-            {activeAd === 'ramayana' ? (
-              /* REAL SHIR RAMAYANA YATRA IRCTC IMAGE BANNER */
-              <div className="relative group overflow-hidden bg-[#FBF8F1] border border-[#E7DFCE] rounded-xs">
-                <a
-                  href="https://www.irctctourism.com/bharatgaurav"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full overflow-hidden"
-                  title="Shri Ramayana Yatra - Book now on irctctourism.com"
-                >
-                  <img
-                    src="/media/promotions/ramayana_yatra.png"
-                    alt="Shri Ramayana Yatra - Bharat Gaurav Deluxe AC Tourist Train"
-                    className="w-full h-auto object-contain max-h-[160px] sm:max-h-[220px] mx-auto transition-transform duration-300 group-hover:scale-[1.005]"
-                  />
-                </a>
-              </div>
-            ) : activeAd === 'myntra' ? (
-              /* REAL MYNTRA FASHION IMAGE BANNER */
-              <div className="relative group overflow-hidden bg-[#FFF0F3] border border-[#FFCCD5] rounded-xs">
-                <a
-                  href="https://www.myntra.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full overflow-hidden"
-                  title="Myntra Big Fashion Festival - Shop Now"
-                >
-                  <img
-                    src="/media/promotions/myntra_fashion.jpg"
-                    alt="Myntra Big Fashion Festival - 50-80% Off"
-                    className="w-full h-auto object-cover max-h-[170px] sm:max-h-[230px] mx-auto transition-transform duration-300 group-hover:scale-[1.005]"
-                  />
-                </a>
-              </div>
+                )}
+              </form>
             ) : (
-              /* MEESHO DISPLAY AD */
-              <div className="bg-[#FFF5F9] border border-[#F9D2E5] p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#9C1D60] text-white flex items-center justify-center font-bold text-lg shadow-xs">
-                    m
+              /* BOOKING SEARCH INPUTS */
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 items-center">
+                {/* From & To inputs container */}
+                <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-11 gap-2 items-center">
+                  {/* From Box */}
+                  <div className="sm:col-span-5 relative flex flex-col justify-center border border-slate-300 rounded-lg px-3.5 py-2 hover:border-slate-400 focus-within:border-[#73D200] focus-within:ring-1 focus-within:ring-[#73D200] transition-all bg-white">
+                    <span className="text-[11px] font-semibold text-slate-500">From</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+                      <input
+                        type="text"
+                        value={fromCity}
+                        onChange={(e) => setFromCity(e.target.value)}
+                        className="w-full text-sm font-bold text-slate-900 bg-transparent focus:outline-none"
+                        placeholder="Origin city"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-[#9C1D60] text-lg leading-none">meesho</span>
-                      <span className="text-[10px] bg-[#9C1D60] text-white font-bold px-1.5 py-0.5">
-                        UP TO 70% OFF
-                      </span>
+
+                  {/* Swap Button */}
+                  <div className="sm:col-span-1 flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={handleSwapCities}
+                      title="Swap Origin and Destination"
+                      className="w-9 h-9 rounded-full border border-slate-300 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* To Box */}
+                  <div className="sm:col-span-5 relative flex flex-col justify-center border border-slate-300 rounded-lg px-3.5 py-2 hover:border-slate-400 focus-within:border-[#73D200] focus-within:ring-1 focus-within:ring-[#73D200] transition-all bg-white">
+                    <span className="text-[11px] font-semibold text-slate-500">To</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+                      <input
+                        type="text"
+                        value={toCity}
+                        onChange={(e) => setToCity(e.target.value)}
+                        className="w-full text-sm font-bold text-slate-900 bg-transparent focus:outline-none"
+                        placeholder="Destination city"
+                      />
                     </div>
-                    <div className="font-bold text-slate-900 text-sm mt-0.5">
-                      Mega Blockbuster Sale
-                    </div>
-                    <p className="text-xs text-slate-600">
-                      Lowest Prices on Sarees, Kurtis, Footwear & Home Essentials. Free Delivery & Cash on Delivery.
-                    </p>
                   </div>
                 </div>
 
-                <a
-                  href="https://www.meesho.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2 bg-[#9C1D60] hover:bg-[#821953] text-white font-bold text-xs uppercase tracking-wider rounded-none flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-xs"
+                {/* Departure Date */}
+                <div className="lg:col-span-3 relative flex flex-col justify-center border border-slate-300 rounded-lg px-3.5 py-2 hover:border-slate-400 focus-within:border-[#73D200] bg-white">
+                  <span className="text-[11px] font-semibold text-slate-500">Departure</span>
+                  <div className="flex items-center justify-between gap-1 mt-0.5">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
+                      <span className="text-sm font-bold text-slate-900 truncate">{departureDate}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => setDepartureDate('Yesterday, 26 Oct')}
+                        className="hover:text-slate-800 p-0.5"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDepartureDate('Tomorrow, 28 Oct')}
+                        className="hover:text-slate-800 p-0.5"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passengers */}
+                <div className="lg:col-span-2 relative flex flex-col justify-center border border-slate-300 rounded-lg px-3.5 py-2 hover:border-slate-400 focus-within:border-[#73D200] bg-white">
+                  <span className="text-[11px] font-semibold text-slate-500">Passengers</span>
+                  <div className="flex items-center justify-between gap-1 mt-0.5">
+                    <span className="text-sm font-bold text-slate-900 truncate">{passengers}</span>
+                    <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+                  </div>
+                </div>
+
+                {/* Search Button (Bright FlixBus Lime Green) */}
+                <div className="lg:col-span-1 w-full">
+                  <button
+                    type="button"
+                    onClick={handleSearchClick}
+                    disabled={loading}
+                    className="w-full h-[54px] rounded-lg bg-[#73D200] hover:bg-[#65be00] active:scale-[0.98] text-slate-950 font-black text-base shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
+                    ) : (
+                      <span>Search</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Active Live Session notification banner */}
+            {hasExistingSession && (
+              <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-emerald-800 font-medium">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  <span>
+                    Active live corridor session found: <strong>RJ-14-PB-4289 (Jaipur ➔ Dehradun)</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/track')}
+                  className="px-3.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  <span>Shop Now</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  <span>Resume Live Tracking</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 5. OFFICIAL ROUTE TIMETABLE & ROUTE DETAILS (DELHI TO AGRA) */}
-      {/* ========================================================================= */}
-      <section className="w-full py-10 px-4 sm:px-6 bg-white">
-        <div className="max-w-7xl mx-auto space-y-10">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
-              Delhi ➔ Agra Live Bus Tracking
-            </h2>
-            <p className="text-sm text-slate-600 max-w-4xl leading-relaxed">
-              Official Real-Time GPS Tracking System for Inter-State Passenger Fleet. Verify bus arrival, departure, speed, and en-route halts along the Delhi-Agra Expressway corridor.
-            </p>
-          </div>
-
-          {/* Timetable Table */}
-          <div className="border border-slate-300 bg-white shadow-xs overflow-hidden">
-            <div className="bg-slate-100 border-b border-slate-300 px-4 py-2.5 flex items-center justify-between">
-              <span className="font-bold text-xs uppercase tracking-wider text-slate-800">
-                Scheduled Stops & Halts (Delhi ➔ Agra Yamuna Expressway Corridor)
-              </span>
-              <span className="text-xs text-slate-500 font-mono">Service: DL-01-AB-1024</span>
+      {/* 3. Four Value Props / Benefits (Screenshot 2) */}
+      <section className="w-full bg-white py-14 px-4 sm:px-6 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 text-center">
+            {/* 1. Comfort on board */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-xl bg-[#E8F8CE] flex items-center justify-center text-[#257800] mb-3.5 shadow-2xs">
+                {/* Reclining seat icon */}
+                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M7 3C5.9 3 5 3.9 5 5v10c0 1.66 1.34 3 3 3h8c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1-.45-1-1V5c0-.55-.45-1-1-1zm10 2c-1.1 0-2 .9-2 2v7c0 .55.45 1 1 1s1-.45 1-1V7c0-1.1-.9-2-2-2zm-3 15H6c-.55 0-1 .45-1 1s.45 1 1 1h8c.55 0 1-.45 1-1s-.45-1-1-1z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Comfort on board
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-[240px]">
+                Our modern buses are equipped with comfortable sleeper and semi-sleeper beds, USB plugs & A/C.
+              </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
-                    <th className="py-2.5 px-4 font-semibold">Stop No.</th>
-                    <th className="py-2.5 px-4 font-semibold">Station / Landmark</th>
-                    <th className="py-2.5 px-4 font-semibold">City</th>
-                    <th className="py-2.5 px-4 font-semibold">Distance</th>
-                    <th className="py-2.5 px-4 font-semibold">Halt Duration</th>
-                    <th className="py-2.5 px-4 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  <tr className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono font-bold">1</td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">Delhi Sarai Kale Khan ISBT</td>
-                    <td className="py-2.5 px-4 text-slate-600">New Delhi</td>
-                    <td className="py-2.5 px-4 font-mono">0.0 KM</td>
-                    <td className="py-2.5 px-4 text-slate-500">Origin Depot</td>
-                    <td className="py-2.5 px-4"><span className="text-emerald-700 font-semibold">Passed</span></td>
-                  </tr>
-                  <tr className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono font-bold">2</td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">Noida Sector 37 / Mahamaya Flyover</td>
-                    <td className="py-2.5 px-4 text-slate-600">Noida</td>
-                    <td className="py-2.5 px-4 font-mono">18.5 KM</td>
-                    <td className="py-2.5 px-4 text-slate-500">5 Mins</td>
-                    <td className="py-2.5 px-4"><span className="text-emerald-700 font-semibold">Passed</span></td>
-                  </tr>
-                  <tr className="bg-amber-50/60 hover:bg-amber-50">
-                    <td className="py-2.5 px-4 font-mono font-bold">3</td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">Jewar Yamuna Expressway Plaza</td>
-                    <td className="py-2.5 px-4 text-slate-600">Jewar</td>
-                    <td className="py-2.5 px-4 font-mono">68.0 KM</td>
-                    <td className="py-2.5 px-4 text-amber-800 font-semibold flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> 20 Mins Scheduled Halt
-                    </td>
-                    <td className="py-2.5 px-4">
-                      <span className="px-2 py-0.5 bg-amber-500 text-white font-mono text-[10px] font-bold">
-                        NEXT STOP
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono font-bold">4</td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">Mathura Raya Expressway Exit</td>
-                    <td className="py-2.5 px-4 text-slate-600">Mathura</td>
-                    <td className="py-2.5 px-4 font-mono">145.0 KM</td>
-                    <td className="py-2.5 px-4 text-slate-500">10 Mins</td>
-                    <td className="py-2.5 px-4"><span className="text-slate-500">Scheduled</span></td>
-                  </tr>
-                  <tr className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono font-bold">5</td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">Agra ISBT Terminal</td>
-                    <td className="py-2.5 px-4 text-slate-600">Agra</td>
-                    <td className="py-2.5 px-4 font-mono">205.0 KM</td>
-                    <td className="py-2.5 px-4 text-slate-500">Final Destination</td>
-                    <td className="py-2.5 px-4"><span className="text-slate-500">Scheduled</span></td>
-                  </tr>
-                </tbody>
-              </table>
+            {/* 2. Safety & Trust */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-xl bg-[#E8F8CE] flex items-center justify-center text-[#257800] mb-3.5 shadow-2xs">
+                <Shield className="w-6 h-6 stroke-[2.2]" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Safety & Trust
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-[240px]">
+                Less worries with real time GPS tracking, modern buses & host supervision.
+              </p>
             </div>
-          </div>
 
-          {/* Popular Routes Section */}
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 mb-4">
-              Popular Inter-State Express Routes
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 border-2 border-[#00529B] bg-blue-50/20">
-                <span className="text-[10px] font-bold text-emerald-700 uppercase">ACTIVE LIVE CORRIDOR</span>
-                <div className="font-bold text-slate-900 text-sm mt-1">Delhi ⇄ Agra</div>
-                <div className="text-xs text-slate-600 mt-0.5">Yamuna Expressway • 205 KM</div>
-                <div className="text-[11px] text-slate-500 font-mono mt-2">Vehicle: DL-01-AB-1024</div>
+            {/* 3. Travel made easy */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-xl bg-[#E8F8CE] flex items-center justify-center text-[#257800] mb-3.5 shadow-2xs">
+                <Ticket className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <div className="p-4 border border-slate-300 bg-white">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">DAILY SERVICE</span>
-                <div className="font-bold text-slate-900 text-sm mt-1">Delhi ⇄ Mathura</div>
-                <div className="text-xs text-slate-600 mt-0.5">Yamuna Expressway • 145 KM</div>
-                <div className="text-[11px] text-slate-500 font-mono mt-2">Multiple Departures</div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Travel made easy
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-[240px]">
+                Hassle free booking & secure payment system.
+              </p>
+            </div>
+
+            {/* 4. Connecting you to the world */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-xl bg-[#E8F8CE] flex items-center justify-center text-[#257800] mb-3.5 shadow-2xs">
+                <Globe className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <div className="p-4 border border-slate-300 bg-white">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">EXPRESS SHUTTLE</span>
-                <div className="font-bold text-slate-900 text-sm mt-1">Delhi ⇄ Jaipur</div>
-                <div className="text-xs text-slate-600 mt-0.5">NH 48 Superfast • 260 KM</div>
-                <div className="text-[11px] text-slate-500 font-mono mt-2">Hourly Service</div>
-              </div>
-              <div className="p-4 border border-slate-300 bg-white">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">INTERCITY NON-STOP</span>
-                <div className="font-bold text-slate-900 text-sm mt-1">Delhi ⇄ Chandigarh</div>
-                <div className="text-xs text-slate-600 mt-0.5">NH 44 Expressway • 245 KM</div>
-                <div className="text-[11px] text-slate-500 font-mono mt-2">Volvo Multi-Axle</div>
-              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1.5">
+                Connecting you to the world
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-[240px]">
+                Endless possibilities. Discover over 8,000 destinations across more than 40 countries.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. Official Footer */}
-      <footer className="w-full bg-slate-900 text-slate-400 py-10 px-4 sm:px-6 mt-auto text-xs">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <div className="font-bold text-white text-base">INTERSTATE TRAVEL</div>
-            <div className="text-slate-400 text-[11px] mt-0.5">
-              MAHARANI TRAVELS • INTEGRATED FLEET PASSENGER TRACKING
+      {/* 4. "Trusted by 50 Crore+ passengers globally" & Logos (Screenshot 2) */}
+      <section className="w-full bg-white py-12 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight text-center mb-8">
+            Trusted by 50 Crore+ passengers globally.
+          </h2>
+
+          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16 opacity-85 grayscale hover:grayscale-0 transition-all duration-300">
+            {/* FLIXBUS */}
+            <span className="font-black text-2xl sm:text-3xl tracking-tight text-slate-800">
+              FLIXBUS
+            </span>
+
+            {/* FLIXTRAIN */}
+            <span className="font-black text-2xl sm:text-3xl tracking-tight text-slate-800">
+              FLIXTRAIN
+            </span>
+
+            {/* Greyhound with leaping dog */}
+            <div className="flex items-center gap-2">
+              <svg className="w-10 h-6 text-slate-800 fill-current" viewBox="0 0 100 50">
+                <path d="M10 25 Q30 10 50 20 Q70 5 95 15 Q75 30 60 25 Q45 40 25 35 Z" />
+              </svg>
+              <span className="font-serif italic font-bold text-xl sm:text-2xl text-slate-800">
+                Greyhound
+              </span>
+            </div>
+
+            {/* KAMILKOC */}
+            <div className="flex flex-col items-center leading-none">
+              <span className="text-[9px] font-bold text-slate-500 tracking-widest uppercase">1926</span>
+              <span className="font-black text-xl sm:text-2xl tracking-wide text-slate-800 uppercase">
+                KÂMİLKOC
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Green Mobile App Promo Section (Screenshot 2) */}
+      <section className="w-full bg-[#73D200] overflow-hidden py-10 sm:py-14 px-4 sm:px-6 relative">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative">
+          {/* Left Text & Badges (Col 7) */}
+          <div className="lg:col-span-7 text-slate-900 flex flex-col justify-center">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-950 mb-2">
+              Get the app and travel with ease of mind
+            </h2>
+            <p className="text-base sm:text-lg font-bold text-slate-800 mb-6">
+              Digital ticket & Live tracking
+            </p>
+
+            {/* 4 Feature Items */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-sm font-bold text-slate-950">
+              <div className="flex items-center gap-3">
+                <Search className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+                <span>Book trips</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Ticket className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+                <span>Your tickets</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+                <span>Track your trip</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Compass className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+                <span>Always in-the-know</span>
+              </div>
+            </div>
+
+            {/* Store Download Badges */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Google Play */}
+              <div className="h-11 px-4 rounded-lg bg-black text-white flex items-center gap-2.5 shadow-md cursor-pointer hover:bg-slate-900 transition-colors">
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M3.609 1.814L13.792 12 3.61 22.186a1.94 1.94 0 0 1-.22-.96V2.774c0-.36.08-.7.22-.96zm11.3 11.3l2.25 2.25-11.66 6.64 9.41-8.89zm0-2.228L5.5 1.996l11.66 6.64-2.251 2.25zM15.89 12l2.67-2.67 3.32 1.89c.94.54.94 1.42 0 1.96l-3.32 1.89L15.89 12z" />
+                </svg>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="text-[9px] uppercase tracking-wide text-slate-300">GET IT ON</span>
+                  <span className="text-xs font-bold text-white mt-0.5">Google Play</span>
+                </div>
+              </div>
+
+              {/* App Store */}
+              <div className="h-11 px-4 rounded-lg bg-black text-white flex items-center gap-2.5 shadow-md cursor-pointer hover:bg-slate-900 transition-colors">
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-.93.04-2.02.63-2.67 1.39-.58.67-.99 1.77-.85 2.81 1.04.08 2.06-.54 2.58-1.27z" />
+                </svg>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="text-[9px] uppercase tracking-wide text-slate-300">Download on the</span>
+                  <span className="text-xs font-bold text-white mt-0.5">App Store</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-[11px] text-slate-400">
-            <span>AIS-140 Compliance</span>
-            <span>Terms of Service</span>
-            <span>Passenger Care: 04843540685</span>
+          {/* Right Smartphone QR Code Mockup (Col 5) */}
+          <div className="lg:col-span-5 flex items-center justify-center relative">
+            {/* Phone Bezel */}
+            <div className="w-[230px] sm:w-[250px] bg-slate-900 rounded-[38px] p-3 shadow-2xl border-4 border-slate-800 relative z-10">
+              <div className="bg-white rounded-[28px] overflow-hidden p-4 flex flex-col items-center text-center">
+                {/* Phone Notch/Camera */}
+                <div className="w-16 h-4 bg-slate-900 rounded-b-xl mx-auto mb-3" />
+
+                {/* QR Code Graphic */}
+                <div className="p-2 border border-slate-200 rounded-xl bg-white shadow-xs">
+                  <svg className="w-36 h-36" viewBox="0 0 100 100" fill="none">
+                    {/* Stylized high precision QR code pattern */}
+                    <rect width="100" height="100" fill="white" />
+                    {/* Top Left Marker */}
+                    <rect x="10" y="10" width="24" height="24" rx="3" fill="#111827" />
+                    <rect x="14" y="14" width="16" height="16" rx="2" fill="white" />
+                    <rect x="18" y="18" width="8" height="8" rx="1" fill="#73D200" />
+
+                    {/* Top Right Marker */}
+                    <rect x="66" y="10" width="24" height="24" rx="3" fill="#111827" />
+                    <rect x="70" y="14" width="16" height="16" rx="2" fill="white" />
+                    <rect x="74" y="18" width="8" height="8" rx="1" fill="#73D200" />
+
+                    {/* Bottom Left Marker */}
+                    <rect x="10" y="66" width="24" height="24" rx="3" fill="#111827" />
+                    <rect x="14" y="70" width="16" height="16" rx="2" fill="white" />
+                    <rect x="18" y="74" width="8" height="8" rx="1" fill="#73D200" />
+
+                    {/* QR Data Dots */}
+                    <rect x="38" y="12" width="4" height="4" fill="#111827" />
+                    <rect x="46" y="12" width="4" height="4" fill="#111827" />
+                    <rect x="54" y="12" width="4" height="4" fill="#111827" />
+                    <rect x="42" y="20" width="4" height="4" fill="#111827" />
+                    <rect x="50" y="20" width="4" height="4" fill="#111827" />
+                    <rect x="38" y="28" width="4" height="4" fill="#111827" />
+                    <rect x="46" y="28" width="4" height="4" fill="#111827" />
+                    <rect x="54" y="28" width="4" height="4" fill="#111827" />
+
+                    <rect x="12" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="20" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="28" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="38" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="46" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="54" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="64" y="42" width="4" height="4" fill="#111827" />
+                    <rect x="76" y="42" width="4" height="4" fill="#111827" />
+
+                    <rect x="12" y="52" width="4" height="4" fill="#111827" />
+                    <rect x="24" y="52" width="4" height="4" fill="#111827" />
+                    <rect x="36" y="52" width="4" height="4" fill="#111827" />
+                    <rect x="48" y="52" width="4" height="4" fill="#111827" />
+                    <rect x="68" y="52" width="4" height="4" fill="#111827" />
+                    <rect x="80" y="52" width="4" height="4" fill="#111827" />
+
+                    <rect x="38" y="66" width="4" height="4" fill="#111827" />
+                    <rect x="50" y="66" width="4" height="4" fill="#111827" />
+                    <rect x="62" y="66" width="4" height="4" fill="#111827" />
+                    <rect x="74" y="66" width="4" height="4" fill="#111827" />
+                    <rect x="86" y="66" width="4" height="4" fill="#111827" />
+
+                    <rect x="42" y="78" width="4" height="4" fill="#111827" />
+                    <rect x="54" y="78" width="4" height="4" fill="#111827" />
+                    <rect x="66" y="78" width="4" height="4" fill="#111827" />
+                    <rect x="78" y="78" width="4" height="4" fill="#111827" />
+                  </svg>
+                </div>
+
+                <span className="text-[11px] font-bold text-blue-600 mt-2.5">
+                  Scan to download the App
+                </span>
+              </div>
+            </div>
+
+            {/* Dark Floating Circular Badge */}
+            <div className="absolute -bottom-4 -right-4 sm:-right-8 w-36 h-36 rounded-full bg-slate-900 text-white p-3 flex flex-col items-center justify-center text-center shadow-xl border-2 border-slate-700 select-none z-20">
+              <span className="text-[11px] font-bold leading-tight">
+                Trusted by 50 Crore+ passengers globally
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. "Popular Cities and Connections" (Screenshot 1) */}
+      <section className="w-full bg-[#FAFAFA] py-14 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+          {/* Section Heading */}
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">
+            Popular Cities and Connections
+          </h2>
+
+          {/* Pill Tabs: Cities / Connections */}
+          <div className="flex items-center gap-1 mb-8 border-b border-slate-200 w-full justify-center pb-2">
+            <button
+              type="button"
+              onClick={() => setPopularTab('cities')}
+              className={`px-4 py-1.5 rounded-t-md text-sm font-bold transition-all cursor-pointer ${
+                popularTab === 'cities'
+                  ? 'bg-[#E8F8CE] text-slate-900 border-b-2 border-[#73D200]'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Cities
+            </button>
+            <button
+              type="button"
+              onClick={() => setPopularTab('connections')}
+              className={`px-4 py-1.5 rounded-t-md text-sm font-bold transition-all cursor-pointer ${
+                popularTab === 'connections'
+                  ? 'bg-[#E8F8CE] text-slate-900 border-b-2 border-[#73D200]'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Connections
+            </button>
+          </div>
+
+          {/* 4 Column List */}
+          <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-6 text-sm text-slate-700">
+            {popularTab === 'cities' ? (
+              <>
+                <div className="flex flex-col gap-3">
+                  {citiesCol1.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c)}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {citiesCol2.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c)}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {citiesCol3.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c)}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {citiesCol4.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c)}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3">
+                  {connectionsCol1.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c.split('➔')[1]?.trim() || 'Dehradun')}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {connectionsCol2.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c.split('➔')[1]?.trim() || 'Dehradun')}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {connectionsCol3.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c.split('➔')[1]?.trim() || 'Dehradun')}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {connectionsCol4.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelectCity(c.split('➔')[1]?.trim() || 'Dehradun')}
+                      className="text-left hover:text-[#257800] transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Footer Section (Screenshot 1) */}
+      <footer className="w-full bg-white border-t border-slate-200 py-12 px-4 sm:px-6 mt-auto">
+        <div className="max-w-7xl mx-auto">
+          {/* 4 Column Links */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+            {/* Bus Travel */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">Bus Travel</h4>
+              <ul className="space-y-2.5 text-slate-700">
+                <li><a href="#destinations" className="hover:text-slate-900">All Bus Destinations</a></li>
+                <li><a href="#routemap" className="hover:text-slate-900">Route Map</a></li>
+                <li><a href="#travelindia" className="hover:text-slate-900">Bus Travel in India</a></li>
+                <li><a href="#overnight" className="hover:text-slate-900">Overnight Buses</a></li>
+                <li><a href="#getapp" className="hover:text-slate-900">Get the App</a></li>
+              </ul>
+            </div>
+
+            {/* Discover */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">Discover</h4>
+              <ul className="space-y-2.5 text-slate-700">
+                <li><a href="#delhi" className="hover:text-slate-900">Bus to Delhi</a></li>
+                <li><a href="#bangalore" className="hover:text-slate-900">Bus to Bangalore</a></li>
+                <li><a href="#hyderabad" className="hover:text-slate-900">Bus to Hyderabad</a></li>
+                <li><a href="#manali" className="hover:text-slate-900">Bus to Manali</a></li>
+                <li>
+                  <a
+                    href="#jodhpur"
+                    className="inline-block px-2.5 py-1 -ml-2.5 rounded bg-slate-100 hover:bg-slate-200 font-medium text-slate-900"
+                  >
+                    Bus to Jodhpur
+                  </a>
+                </li>
+                <li><a href="#dehradun" className="hover:text-slate-900">Bus to Dehradun</a></li>
+                <li><a href="#lucknow" className="hover:text-slate-900">Bus to Lucknow</a></li>
+              </ul>
+            </div>
+
+            {/* FlixBus */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">FlixBus</h4>
+              <ul className="space-y-2.5 text-slate-700">
+                <li><a href="#about" className="hover:text-slate-900">About Flix</a></li>
+                <li><a href="#conditions" className="hover:text-slate-900">General Conditions for Business and Booking</a></li>
+                <li><a href="#terms" className="hover:text-slate-900">General Terms and Conditions of Travel</a></li>
+                <li><a href="#jobs" className="hover:text-slate-900">Jobs</a></li>
+                <li><a href="#news" className="hover:text-slate-900">News Room</a></li>
+                <li><a href="#partner" className="hover:text-slate-900">Partner Agents Login</a></li>
+              </ul>
+            </div>
+
+            {/* Customer Care */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">Customer Care</h4>
+              <ul className="space-y-2.5 text-slate-700">
+                <li><a href="#help" className="hover:text-slate-900">Help</a></li>
+                <li><a href="#services" className="hover:text-slate-900">Services</a></li>
+                <li><a href="#lounge" className="hover:text-slate-900">Flix Lounge</a></li>
+                <li><a href="#manage" className="hover:text-slate-900">Manage My Booking</a></li>
+                <li><a href="#seats" className="hover:text-slate-900">Seat Reservations</a></li>
+                <li><a href="#luggage" className="hover:text-slate-900">Luggage</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Copyright & Telemetry note */}
+          <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p>© 2026 Flix SE. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <span>AIS-140 GPS Compliance</span>
+              <span>•</span>
+              <span>Privacy Policy</span>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => setShowTrackerModal(true)}
+                className="text-emerald-700 font-semibold hover:underline"
+              >
+                Live Fleet GPS Tracker
+              </button>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* 8. Interactive Trip Tracker Dialog / Modal */}
+      {showTrackerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="bg-[#73D200] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-xl text-slate-950 uppercase tracking-tight">FLIXBUS</span>
+                <span className="text-slate-800 text-sm font-bold">• Trip Tracker</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTrackerModal(false)}
+                className="p-1 rounded-full text-slate-900 hover:bg-black/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+                Enter your booking PNR to view real-time location, vehicle speed, and live stop telematics.
+              </p>
+
+              <form onSubmit={handleLiveTrackSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                    Booking PNR
+                  </label>
+                  <div className="relative">
+                    <Ticket className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Enter PNR (e.g. JD-7842)"
+                      value={pnrInput}
+                      onChange={(e) => {
+                        setPnrInput(e.target.value.toUpperCase());
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      autoFocus
+                      className="w-full h-12 pl-11 pr-4 rounded-lg border-2 border-slate-300 text-slate-900 placeholder:text-slate-400 text-base font-bold uppercase tracking-wider focus:outline-none focus:border-[#73D200] focus:ring-1 focus:ring-[#73D200]"
+                    />
+                  </div>
+                </div>
+
+                {errorMessage && (
+                  <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold leading-snug">
+                    {errorMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 rounded-lg bg-[#73D200] hover:bg-[#65be00] active:scale-[0.98] text-slate-950 font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
+                      <span>Connecting to GPS...</span>
+                    </>
+                  ) : (
+                    <span>Live Track Bus</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default PnrEntryPage;

@@ -113,7 +113,7 @@ export const AdminActionSchema = z.object({
 
 export const ValidatePnrSchema = z.object({
   pnr: z.string().min(1, 'PNR is required').max(30, 'PNR too long'),
-  lastName: z.string().min(1, 'Passenger last name is required').max(50, 'Last name too long'),
+  lastName: z.string().max(50, 'Last name too long').optional(),
 });
 
 export const UpdatePnrSchema = z.object({
