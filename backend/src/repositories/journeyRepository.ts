@@ -200,7 +200,10 @@ export class JourneyRepository implements IJourneyRepository {
   private supabaseRepo: SupabaseJourneyRepository | null = null;
   private isUsingSupabase = false;
   private lastSupabaseFailure = 0;
-  private readonly cooldownMs = 30000; // 30s cooldown after connection failure
+  private readonly cooldownMs = 60000; // 60s cooldown after connection failure
+  private cachedJourney: Journey | null = null;
+  private cacheExpiresAt = 0;
+  private readonly cacheTtlMs = 3000; // 3-second cache TTL
 
   constructor() {
     this.localRepo = new LocalJourneyRepository();
@@ -221,7 +224,7 @@ export class JourneyRepository implements IJourneyRepository {
     }
   }
 
-  private withTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+  private withTimeout<T>(promise: Promise<T>, ms = 1000): Promise<T> {
     return Promise.race([
       promise,
       new Promise<T>((_, reject) =>
@@ -239,27 +242,50 @@ export class JourneyRepository implements IJourneyRepository {
   }
 
   public async getJourney(): Promise<Journey> {
+    const now = Date.now();
+    // Return cached state instantly (< 1ms)
+    if (this.cachedJourney && now < this.cacheExpiresAt) {
+      return { ...this.cachedJourney };
+    }
+
     if (this.canTrySupabase()) {
       try {
-        return await this.withTimeout(this.supabaseRepo!.getJourney(), 3000);
+        const fetched = await this.withTimeout(this.supabaseRepo!.getJourney(), 1000);
+        this.cachedJourney = fetched;
+        this.cacheExpiresAt = now + this.cacheTtlMs;
+        // Keep local repo synchronized in background
+        this.localRepo.updateJourney(fetched).catch(() => {});
+        return { ...fetched };
       } catch (err: any) {
-        this.lastSupabaseFailure = Date.now();
+        this.lastSupabaseFailure = now;
         console.warn('[JourneyRepository] Supabase get failed, falling back to local storage:', err?.message || err);
       }
     }
-    return this.localRepo.getJourney();
+
+    const localJourney = await this.localRepo.getJourney();
+    this.cachedJourney = localJourney;
+    this.cacheExpiresAt = now + this.cacheTtlMs;
+    return { ...localJourney };
   }
 
   public async updateJourney(journey: Journey): Promise<Journey> {
+    const now = Date.now();
+    // Immediately update in-memory cache (< 1ms)
+    this.cachedJourney = { ...journey };
+    this.cacheExpiresAt = now + this.cacheTtlMs;
+
+    // Persist to local disk storage
+    const updated = await this.localRepo.updateJourney(journey);
+
+    // Sync to Supabase in the background without blocking client response!
     if (this.canTrySupabase()) {
-      try {
-        return await this.withTimeout(this.supabaseRepo!.updateJourney(journey), 3000);
-      } catch (err: any) {
+      this.withTimeout(this.supabaseRepo!.updateJourney(journey), 2000).catch((err: any) => {
         this.lastSupabaseFailure = Date.now();
-        console.warn('[JourneyRepository] Supabase update failed, falling back to local storage:', err?.message || err);
-      }
+        console.warn('[JourneyRepository] Supabase async sync failed:', err?.message || err);
+      });
     }
-    return this.localRepo.updateJourney(journey);
+
+    return updated;
   }
 }
 
