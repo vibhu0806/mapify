@@ -728,16 +728,65 @@
           <button onclick="setDuration(5)" class="btn-preset">5 Mins (Fast)</button>
           <button onclick="setDuration(30)" class="btn-preset">30 Mins (Demo)</button>
           <button onclick="setDuration(120)" class="btn-preset">2 Hours</button>
-          <button onclick="setDuration(360)" class="btn-preset">6 Hours</button>
-          <button onclick="setDuration(660)" class="btn-preset" style="border-color: var(--emerald-border); color: var(--emerald);">11 Hours (Real)</button>
+          <button onclick="setDuration(720)" class="btn-preset" style="border-color: var(--emerald-border); color: var(--emerald);">12 Hours (Real)</button>
+          <button onclick="setDuration(900)" class="btn-preset">15 Hours (Ultra Slow)</button>
         </div>
 
         <div class="input-row">
-          <input id="customDuration" type="number" min="1" max="1440" value="660" />
+          <input id="customDuration" type="number" min="1" max="1440" value="720" />
           <span class="input-row-unit">MINUTES</span>
           <button onclick="setDuration(document.getElementById('customDuration').value)" class="btn-secondary">
             APPLY
           </button>
+        </div>
+      </div>
+
+      <!-- Route Position & Pointer Control (Seek along route) -->
+      <div class="card">
+        <div class="section-header-row" style="margin-bottom: 0.25rem;">
+          <div class="section-eyebrow">ROUTE POINTER & WAYPOINT CONTROL</div>
+          <div id="seekReadout" class="status-badge" style="font-family: var(--font-mono); color: var(--text);">
+            0.0% · 0.0 KM
+          </div>
+        </div>
+        <p class="subtext">Control the vehicle pointer position directly along the active route. Slide to any point or jump directly to checkpoints.</p>
+
+        <div style="margin: 1rem 0;">
+          <input
+            id="routeSeekSlider"
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value="0"
+            oninput="handleSeekInput(this.value)"
+            onchange="handleSeekCommit(this.value)"
+            style="width: 100%; accent-color: var(--emerald); cursor: pointer;"
+          />
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); margin-top: 0.25rem;">
+            <span>JAIPUR (0%)</span>
+            <span id="sliderValueText" style="color: var(--emerald); font-weight: 700;">0.0%</span>
+            <span>DEHRADUN (100%)</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 0.75rem;">
+          <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem;">
+            QUICK JUMP TO CHECKPOINTS:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;" id="stopsQuickList">
+            <button onclick="seekToProgress(0)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Jaipur Depot (0%)</button>
+            <button onclick="seekToProgress(11)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Shahpura (11%)</button>
+            <button onclick="seekToProgress(18)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Kotputli (18%)</button>
+            <button onclick="seekToProgress(23)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Behror (23%)</button>
+            <button onclick="seekToProgress(41)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Gurugram (41%)</button>
+            <button onclick="seekToProgress(50)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Delhi ISBT (50%)</button>
+            <button onclick="seekToProgress(62)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Meerut (62%)</button>
+            <button onclick="seekToProgress(71)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Muzaffarnagar (71%)</button>
+            <button onclick="seekToProgress(80)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Roorkee (80%)</button>
+            <button onclick="seekToProgress(85)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Haridwar (85%)</button>
+            <button onclick="seekToProgress(100)" class="btn-preset" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;">Dehradun ISBT (100%)</button>
+          </div>
         </div>
       </div>
 
@@ -879,6 +928,52 @@
       document.getElementById('metricElapsed').textContent = formatSeconds(sim.currentElapsedSeconds);
       document.getElementById('metricProgress').textContent = (sim.progress * 100).toFixed(1) + '%';
       document.getElementById('metricRemaining').textContent = (sim.distanceRemainingMeters / 1000).toFixed(1) + ' KM';
+
+      if (!isSeekingActive) {
+        const pVal = (sim.progress * 100).toFixed(1);
+        const slider = document.getElementById('routeSeekSlider');
+        if (slider) slider.value = pVal;
+        const valText = document.getElementById('sliderValueText');
+        if (valText) valText.textContent = pVal + '%';
+        const readout = document.getElementById('seekReadout');
+        if (readout) readout.textContent = pVal + '% · ' + (sim.distanceTravelledMeters / 1000).toFixed(1) + ' KM';
+      }
+    }
+
+    let isSeekingActive = false;
+
+    function handleSeekInput(val) {
+      isSeekingActive = true;
+      document.getElementById('sliderValueText').textContent = parseFloat(val).toFixed(1) + '%';
+      document.getElementById('seekReadout').textContent = parseFloat(val).toFixed(1) + '% (Seeking...)';
+    }
+
+    async function handleSeekCommit(val) {
+      await seekToProgress(parseFloat(val));
+      isSeekingActive = false;
+    }
+
+    async function seekToProgress(progressPercent) {
+      if (!authToken) return;
+      const progress = Math.max(0, Math.min(100, progressPercent)) / 100;
+      try {
+        const res = await fetch('/api/admin/journey/seek', {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ progress })
+        });
+        if (res.ok) {
+          showFeedback(`Vehicle moved to ${(progress * 100).toFixed(1)}% along route.`, 'success');
+          pollTelemetry();
+        } else {
+          const err = await res.json();
+          showFeedback(err.message || 'Failed to reposition vehicle.', 'error');
+        }
+      } catch (e) {
+        showFeedback(e.message, 'error');
+      } finally {
+        isSeekingActive = false;
+      }
     }
 
     function formatSeconds(sec) {

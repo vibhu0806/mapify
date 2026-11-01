@@ -196,4 +196,17 @@ export const api = {
     const result = await handleResponse<{ message: string; data: JourneyTelemetry }>(res);
     return result.data;
   },
+
+  async seekJourney(token: string, options: { progress?: number; distanceMeters?: number }): Promise<JourneyTelemetry> {
+    const res = await fetch(`${API_BASE}/admin/journey/seek`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+    const result = await handleResponse<{ message: string; data: JourneyTelemetry }>(res);
+    return result.data;
+  },
 };

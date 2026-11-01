@@ -25,3 +25,4 @@ apiRouter.post('/admin/journey/pause', requireAdminAuth, AdminController.pauseJo
 apiRouter.post('/admin/journey/resume', requireAdminAuth, AdminController.resumeJourney);
 apiRouter.post('/admin/journey/reset', requireAdminAuth, AdminController.resetJourney);
 apiRouter.patch('/admin/journey/config', requireAdminAuth, AdminController.updateConfig);
+apiRouter.patch('/admin/journey/seek', requireAdminAuth, AdminController.seekJourney);

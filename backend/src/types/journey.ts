@@ -119,3 +119,11 @@ export const ValidatePnrSchema = z.object({
 export const UpdatePnrSchema = z.object({
   pnr: z.string().min(3, 'PNR must be at least 3 characters').max(30, 'PNR too long'),
 });
+
+export const SeekJourneySchema = z.object({
+  progress: z.number().min(0, 'Progress must be >= 0').max(1, 'Progress must be <= 1').optional(),
+  distanceMeters: z.number().min(0, 'Distance must be >= 0').optional(),
+}).refine(
+  (data) => data.progress !== undefined || data.distanceMeters !== undefined,
+  { message: 'Must provide either progress (0-1) or distanceMeters' }
+);

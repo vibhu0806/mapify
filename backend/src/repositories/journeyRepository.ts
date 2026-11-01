@@ -20,7 +20,7 @@ const DEFAULT_JOURNEY: Journey = {
   started_at: null,
   paused_at: null,
   elapsed_before_pause_seconds: 0.0,
-  duration_seconds: 39600.0, // 11 hours default (Jaipur to Dehradun)
+  duration_seconds: 43200.0, // 12 hours default (Jaipur to Dehradun)
   total_distance_meters: RouteService.getRoute().totalDistanceMeters,
   pnr_code: 'JD-7842',
   pnr_hash: PnrService.hashPnr('JD-7842'),

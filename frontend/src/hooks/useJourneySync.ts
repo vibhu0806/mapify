@@ -57,7 +57,7 @@ export function useJourneySync(pollIntervalMs = 3500): UseJourneySyncResult {
     status: 'running',
     startedAtMs: null,
     elapsedBeforePause: 0,
-    durationSeconds: 39600,
+    durationSeconds: 43200,
     totalDistanceMeters: 592400,
     lastPingReceivedAt: Date.now(),
     targetDistanceMeters: initialCached?.distanceTravelledMeters || 0,
@@ -151,13 +151,34 @@ export function useJourneySync(pollIntervalMs = 3500): UseJourneySyncResult {
     return () => clearInterval(interval);
   }, [fetchTelemetry, pollIntervalMs]);
 
-  // Authentic realistic GPS packet updates with dead-reckoning catch-up and telemetry lagging
+  // Efficient GPS-style updates: throttled requestAnimationFrame with visibility-based pausing
   useEffect(() => {
     if (!routeData || routeData.points.length === 0) return;
 
     let animFrameId: number;
+    let lastTickTime = 0;
+    const TICK_INTERVAL_MS = 250; // ~4fps — smooth enough for a moving bus, 15x less CPU than 60fps
 
-    const tick = () => {
+    // Pause updates when tab is hidden to save battery/CPU
+    let isTabVisible = true;
+    const handleVisibilityChange = () => {
+      isTabVisible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const tick = (timestamp: number) => {
+      // Throttle: skip frames until TICK_INTERVAL_MS has passed
+      if (timestamp - lastTickTime < TICK_INTERVAL_MS) {
+        animFrameId = requestAnimationFrame(tick);
+        return;
+      }
+      lastTickTime = timestamp;
+
+      // Skip computation entirely when tab is hidden
+      if (!isTabVisible) {
+        animFrameId = requestAnimationFrame(tick);
+        return;
+      }
       const sync = syncRef.current;
       const { status, durationSeconds, totalDistanceMeters, lastPingReceivedAt, targetDistanceMeters } = sync;
       const points = routeData.points;
@@ -233,7 +254,10 @@ export function useJourneySync(pollIntervalMs = 3500): UseJourneySyncResult {
     };
 
     animFrameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrameId);
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [routeData]);
 
   return {

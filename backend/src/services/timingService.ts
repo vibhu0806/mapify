@@ -159,6 +159,94 @@ export class TimingService {
   }
 
   /**
+   * Seek journey to a specific position.
+   * Accepts either a progress fraction (0.0–1.0) or a target distance in meters.
+   * Works in any state: idle transitions to paused at the target position,
+   * running re-anchors started_at so elapsed matches the target, paused updates elapsed directly.
+   */
+  public static seekJourney(
+    journey: Journey,
+    options: { progress?: number; distanceMeters?: number },
+    serverTime: Date = new Date()
+  ): Journey {
+    const totalDuration = Math.max(1, journey.duration_seconds);
+    const totalDistance = Math.max(1, journey.total_distance_meters);
+    const nowIso = serverTime.toISOString();
+
+    let targetElapsed: number;
+
+    if (options.progress !== undefined) {
+      const clampedProgress = Math.max(0, Math.min(1, options.progress));
+      targetElapsed = clampedProgress * totalDuration;
+    } else if (options.distanceMeters !== undefined) {
+      const clampedDistance = Math.max(0, Math.min(totalDistance, options.distanceMeters));
+      const progress = clampedDistance / totalDistance;
+      targetElapsed = progress * totalDuration;
+    } else {
+      throw new Error('Must provide either progress or distanceMeters');
+    }
+
+    // Clamp to valid range
+    targetElapsed = Math.max(0, Math.min(totalDuration, targetElapsed));
+
+    if (targetElapsed >= totalDuration) {
+      return {
+        ...journey,
+        status: 'completed',
+        started_at: null,
+        paused_at: nowIso,
+        elapsed_before_pause_seconds: totalDuration,
+        updated_at: nowIso,
+      };
+    }
+
+    switch (journey.status) {
+      case 'idle':
+        // Move to paused at the target position
+        return {
+          ...journey,
+          status: 'paused',
+          started_at: null,
+          paused_at: nowIso,
+          elapsed_before_pause_seconds: targetElapsed,
+          updated_at: nowIso,
+        };
+
+      case 'paused':
+        // Update elapsed directly
+        return {
+          ...journey,
+          elapsed_before_pause_seconds: targetElapsed,
+          updated_at: nowIso,
+        };
+
+      case 'running':
+        // Re-anchor started_at so that (now - started_at) + elapsed_before_pause = targetElapsed
+        // Set elapsed_before_pause to targetElapsed and reset started_at to now
+        return {
+          ...journey,
+          started_at: nowIso,
+          elapsed_before_pause_seconds: targetElapsed,
+          updated_at: nowIso,
+        };
+
+      case 'completed':
+        // Move back to paused at the target position
+        return {
+          ...journey,
+          status: 'paused',
+          started_at: null,
+          paused_at: nowIso,
+          elapsed_before_pause_seconds: targetElapsed,
+          updated_at: nowIso,
+        };
+
+      default:
+        throw new Error(`Unknown journey status: ${journey.status}`);
+    }
+  }
+
+  /**
    * Update journey simulation configuration (duration)
    */
   public static updateConfig(journey: Journey, durationSeconds: number, serverTime: Date = new Date()): Journey {

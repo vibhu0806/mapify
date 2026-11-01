@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { journeyRepository } from '../repositories/journeyRepository.js';
 import { TimingService } from '../services/timingService.js';
 import { RouteService } from '../services/routeService.js';
-import { UpdateConfigSchema, JourneyTelemetry, AdminActionSchema, UpdatePnrSchema } from '../types/journey.js';
+import { UpdateConfigSchema, JourneyTelemetry, AdminActionSchema, UpdatePnrSchema, SeekJourneySchema } from '../types/journey.js';
 import { PnrService } from '../services/pnrService.js';
 
 function buildTelemetryResponse(journey: any, serverTime: Date = new Date()): JourneyTelemetry {
@@ -299,6 +299,39 @@ export class AdminController {
       });
     } catch (err: any) {
       res.status(500).json({ error: 'InternalServerError', message: err.message });
+    }
+  }
+
+  /**
+   * PATCH /api/admin/journey/seek
+   * Seeks the journey pointer to a specific position along the route.
+   * Accepts { progress: 0.0-1.0 } or { distanceMeters: number }.
+   */
+  public static async seekJourney(req: Request, res: Response): Promise<void> {
+    try {
+      const parseResult = SeekJourneySchema.safeParse(req.body);
+      if (!parseResult.success) {
+        res.status(400).json({
+          error: 'ValidationError',
+          message: parseResult.error.errors.map(e => e.message).join(', '),
+        });
+        return;
+      }
+
+      const currentJourney = await journeyRepository.getJourney();
+      const updatedJourney = TimingService.seekJourney(currentJourney, parseResult.data);
+      const saved = await journeyRepository.updateJourney(updatedJourney);
+
+      res.status(200).json({
+        message: 'Journey position updated successfully.',
+        data: buildTelemetryResponse(saved),
+      });
+    } catch (err: any) {
+      console.error('[AdminController.seekJourney] Error:', err);
+      res.status(500).json({
+        error: 'InternalServerError',
+        message: err.message || 'Failed to seek journey position.',
+      });
     }
   }
 }
