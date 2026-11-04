@@ -795,13 +795,13 @@
         <div class="section-header-row" style="margin-bottom: 0.25rem;">
           <div class="section-eyebrow">JOURNEY PNR KEY</div>
           <div id="activePnrBadge" class="status-badge running">
-            ACTIVE: JD-7842
+            ACTIVE: 2438778
           </div>
         </div>
         <p class="subtext">Passengers enter this PNR along with last name 'bhatnagar' on the public tracking portal.</p>
 
         <form onsubmit="handleUpdatePnr(event)" class="input-row">
-          <input id="pnrEditInput" type="text" value="JD-7842" placeholder="e.g. JD-7842" style="width: 180px;" />
+          <input id="pnrEditInput" type="text" value="2438778" placeholder="e.g. 2438778" style="width: 180px;" />
           <button type="submit" class="btn-secondary">
             UPDATE PNR
           </button>
@@ -1029,7 +1029,7 @@
         });
         if (res.ok) {
           const d = await res.json();
-          const p = d.pnr_code || 'JD-7842';
+          const p = d.pnr_code || '2438778';
           document.getElementById('activePnrBadge').textContent = 'ACTIVE: ' + p;
           document.getElementById('pnrEditInput').value = p;
         }

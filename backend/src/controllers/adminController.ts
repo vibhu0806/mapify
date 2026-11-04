@@ -265,7 +265,7 @@ export class AdminController {
     try {
       const journey = await journeyRepository.getJourney();
       res.status(200).json({
-        pnr_code: journey.pnr_code || 'JD-7842',
+        pnr_code: journey.pnr_code || '2438778',
       });
     } catch (err: any) {
       res.status(500).json({ error: 'InternalServerError', message: err.message });

@@ -8,7 +8,7 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
   let validPnrToken = '';
 
   beforeAll(async () => {
-    // Reset journey to idle and ensure default PNR 'JD-7842'
+    // Reset journey to idle and ensure default PNR '2438778'
     await request(app)
       .post('/api/admin/journey/reset')
       .set('Authorization', `Bearer ${adminSecret}`)
@@ -17,12 +17,12 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
     await request(app)
       .patch('/api/admin/journey/pnr')
       .set('Authorization', `Bearer ${adminSecret}`)
-      .send({ pnr: 'JD-7842' });
+      .send({ pnr: '2438778' });
 
-    // Validate default PNR 'JD-7842' and passenger last name 'bhatnagar'
+    // Validate default PNR '2438778' and passenger last name 'bhatnagar'
     const pnrRes = await request(app)
       .post('/api/pnr/validate')
-      .send({ pnr: 'JD-7842', lastName: 'bhatnagar' });
+      .send({ pnr: '2438778', lastName: 'bhatnagar' });
 
     expect(pnrRes.status).toBe(200);
     validPnrToken = pnrRes.body.pnrToken;
@@ -38,7 +38,7 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
   it('Validates correct PNR with matching last name bhatnagar', async () => {
     const res = await request(app)
       .post('/api/pnr/validate')
-      .send({ pnr: 'jd 7842', lastName: 'Bhatnagar' }); // case-insensitive check
+      .send({ pnr: '2438778', lastName: 'Bhatnagar' }); // case-insensitive check
 
     expect(res.status).toBe(200);
     expect(res.body.valid).toBe(true);
@@ -48,7 +48,7 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
   it('Rejects valid PNR if last name is not bhatnagar', async () => {
     const res = await request(app)
       .post('/api/pnr/validate')
-      .send({ pnr: 'JD-7842', lastName: 'Sharma' });
+      .send({ pnr: '2438778', lastName: 'Sharma' });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('InvalidCredentials');
@@ -119,7 +119,7 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
       .set('Authorization', `Bearer ${adminSecret}`);
 
     expect(getRes.status).toBe(200);
-    expect(getRes.body.pnr_code).toBe('JD-7842');
+    expect(getRes.body.pnr_code).toBe('2438778');
 
     // 2. Update PNR
     const patchRes = await request(app)
@@ -133,7 +133,7 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
     // 3. Verify new PNR validates and old PNR fails
     const oldPnrRes = await request(app)
       .post('/api/pnr/validate')
-      .send({ pnr: 'JD-7842', lastName: 'bhatnagar' });
+      .send({ pnr: '2438778', lastName: 'bhatnagar' });
     expect(oldPnrRes.status).toBe(401);
 
     const newPnrRes = await request(app)
@@ -141,11 +141,11 @@ describe('Authoritative REST API Endpoints with PNR Access', () => {
       .send({ pnr: 'JD-9999', lastName: 'bhatnagar' });
     expect(newPnrRes.status).toBe(200);
 
-    // Restore PNR back to JD-7842 for consistency
+    // Restore PNR back to 2438778 for consistency
     await request(app)
       .patch('/api/admin/journey/pnr')
       .set('Authorization', `Bearer ${adminSecret}`)
-      .send({ pnr: 'JD-7842' });
+      .send({ pnr: '2438778' });
   });
 
   it('Rejects unauthenticated admin access with 401', async () => {

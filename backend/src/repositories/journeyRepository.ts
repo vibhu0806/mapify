@@ -22,8 +22,8 @@ const DEFAULT_JOURNEY: Journey = {
   elapsed_before_pause_seconds: 0.0,
   duration_seconds: 43200.0, // 12 hours default (Jaipur to Dehradun)
   total_distance_meters: RouteService.getRoute().totalDistanceMeters,
-  pnr_code: 'JD-7842',
-  pnr_hash: PnrService.hashPnr('JD-7842'),
+  pnr_code: '2438778',
+  pnr_hash: PnrService.hashPnr('2438778'),
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -66,7 +66,7 @@ export class LocalJourneyRepository implements IJourneyRepository {
         const raw = fs.readFileSync(this.filePath, 'utf8');
         const parsed = JSON.parse(raw);
         if (!parsed.pnr_hash) {
-          parsed.pnr_code = parsed.pnr_code || 'JD-7842';
+          parsed.pnr_code = parsed.pnr_code || '2438778';
           parsed.pnr_hash = PnrService.hashPnr(parsed.pnr_code);
           fs.writeFileSync(this.filePath, JSON.stringify(parsed, null, 2), 'utf8');
         }
@@ -142,8 +142,8 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
       elapsed_before_pause_seconds: Number(data.elapsed_before_pause_seconds),
       duration_seconds: Number(data.duration_seconds),
       total_distance_meters: Number(data.total_distance_meters),
-      pnr_code: data.pnr_code || 'JD-7842',
-      pnr_hash: data.pnr_hash || PnrService.hashPnr(data.pnr_code || 'JD-7842'),
+      pnr_code: data.pnr_code || '2438778',
+      pnr_hash: data.pnr_hash || PnrService.hashPnr(data.pnr_code || '2438778'),
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -162,8 +162,8 @@ export class SupabaseJourneyRepository implements IJourneyRepository {
         elapsed_before_pause_seconds: journey.elapsed_before_pause_seconds,
         duration_seconds: journey.duration_seconds,
         total_distance_meters: journey.total_distance_meters,
-        pnr_code: journey.pnr_code || 'JD-7842',
-        pnr_hash: journey.pnr_hash || PnrService.hashPnr(journey.pnr_code || 'JD-7842'),
+        pnr_code: journey.pnr_code || '2438778',
+        pnr_hash: journey.pnr_hash || PnrService.hashPnr(journey.pnr_code || '2438778'),
         updated_at: new Date().toISOString(),
       })
       .select()

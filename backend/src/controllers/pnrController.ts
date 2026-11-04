@@ -46,7 +46,7 @@ export class PnrController {
 
     try {
       const journey = await journeyRepository.getJourney();
-      const currentPnr = journey.pnr_code || 'JD-7842';
+      const currentPnr = journey.pnr_code || '2438778';
       const storedHash = journey.pnr_hash || PnrService.hashPnr(currentPnr);
 
       // 3. Constant-time cryptographic verification (also handles normalized/dash-flexible comparison)

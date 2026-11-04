@@ -8,8 +8,8 @@
   "elapsed_before_pause_seconds": 0,
   "duration_seconds": 42000,
   "total_distance_meters": 592400,
-  "pnr_code": "OJ-1234",
-  "pnr_hash": "dc286622a9ef322264dc7d860fbf279f4a103fb092c32433c30e7650204831b1",
+  "pnr_code": "2438778",
+  "pnr_hash": "7ec4802b1db7b63cac0cd1adc6d781cdebaf35175063de6c41094f861e0d2f09",
   "created_at": "2026-10-22T22:16:26.162+00:00",
-  "updated_at": "2026-11-01T12:52:59.564Z"
+  "updated_at": "2026-11-04T11:45:59.426Z"
 }
